@@ -1,141 +1,425 @@
-{{-- CSS untuk animasi dan hover effect --}}
-@push('styles')
+@extends('layouts.main')
+@section('title','Lembaga Kemasyarakatan Desa (LKD)')
+@section('content')
+@php
+  // Helper function untuk menampilkan foto (sesuai pola sebelumnya)
+  function getPhotoUrl($path, $placeholder = 'https://via.placeholder.com/400x300?text=Cover+LKD') {
+    return $path ? asset('storage/' . $path) : $placeholder;
+  }
+@endphp
 <style>
-  .card-hover {
-    transition: transform 0.2s ease-in-out, box-shadow 0.3s ease-in-out;
-  }
-  .card-hover:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 1rem 1.5rem rgba(0,0,0,.15) !important; /* Bayangan lebih kuat saat hover */
-  }
-  .text-line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+  /* Hero Section */
+  .hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4rem 0;
+    margin-bottom: 3rem;
+    border-radius: 0 0 50px 0;
+    position: relative;
     overflow: hidden;
-    text-overflow: ellipsis;
   }
-
-  /* CSS UNTUK ANIMASI SCROLL */
-  .fade-in-card {
-    opacity: 0;
-    transform: translateY(40px);
-    transition: opacity 0.5s ease-out, transform 0.6s ease-out;
+  
+  .hero-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: float 20s infinite linear;
   }
-
-  .fade-in-card.visible {
-    opacity: 1;
-    transform: translateY(0);
+  
+  @keyframes float {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Card Styles */
+  .lkd-card {
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    background: white;
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .lkd-card:hover {
+    transform: translateY(-15px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  }
+  
+  .lkd-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+  }
+  
+  .lkd-card:hover::before {
+    transform: scaleX(1);
+  }
+  
+  .lkd-card .card-img-top {
+    height: 220px;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+  
+  .lkd-card:hover .card-img-top {
+    transform: scale(1.05);
+  }
+  
+  .lkd-card .card-body {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .lkd-card .card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+    transition: color 0.3s ease;
+  }
+  
+  .lkd-card:hover .card-title {
+    color: #667eea;
+  }
+  
+  .lkd-card .card-text {
+    color: #6c757d;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    flex: 1;
+  }
+  
+  .lkd-card .btn-primary {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+    border-radius: 25px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+  
+  .lkd-card .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+  }
+  
+  /* Badge Styles */
+  .lkd-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    color: #495057;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    z-index: 2;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6c757d;
+  }
+  
+  .empty-state i {
+    font-size: 4rem;
+    color: #dee2e6;
+    margin-bottom: 1rem;
+  }
+  
+  /* Pagination Styles */
+  .pagination {
+    margin-top: 3rem;
+  }
+  
+  .page-link {
+    border: none;
+    color: #667eea;
+    margin: 0 3px;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+  }
+  
+  .page-item.active .page-link {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+  }
+  
+  .page-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+  }
+  
+  /* Stats Section */
+  .stats-section {
+    background: #f8f9fa;
+    padding: 3rem 0;
+    margin-bottom: 3rem;
+    border-radius: 20px;
+  }
+  
+  .stat-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+  
+  .stat-card i {
+    font-size: 3rem;
+    color: #667eea;
+    margin-bottom: 1rem;
+  }
+  
+  .stat-card h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Filter Section */
+  .filter-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
+  }
+  
+  .filter-btn {
+    border: 2px solid #e9ecef;
+    background: white;
+    color: #6c757d;
+    border-radius: 25px;
+    padding: 0.5rem 1.5rem;
+    margin: 0.25rem;
+    transition: all 0.3s ease;
+  }
+  
+  .filter-btn:hover, .filter-btn.active {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border-color: transparent;
+    color: white;
+    transform: translateY(-2px);
   }
 </style>
-@endpush
 
-
-@extends('layouts.main')
-
-@section('title', 'LKD')
-
-@section('content')
-<div class="container py-4 py-md-5">
-
-  {{-- BAGIAN JUDUL --}}
-  <div class="row mb-5">
-    <div class="col text-center">
-      <h1 class="h2 mb-1 fw-bold">Lembaga & Kelompok Desa</h1>
-      <p class="text-muted">Daftar lembaga dan kelompok yang aktif di desa kami.</p>
+<!-- Hero Section -->
+<div class="hero-section">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6">
+        <h1 class="display-4 fw-bold mb-4" data-aos="fade-right">
+          Lembaga Kemasyarakatan Desa
+        </h1>
+        <p class="lead mb-4" data-aos="fade-right" data-aos-delay="100">
+          Mengenal lebih dekat berbagai lembaga kemasyarakatan yang aktif di desa kami. 
+          Dari BPD hingga PKK, semua bekerja sama untuk membangun desa yang lebih baik.
+        </p>
+        
+      </div>
+      
     </div>
   </div>
+</div>
 
-  @if($items->isEmpty())
-    {{-- TAMPILAN JIKA DATA KOSONG --}}
-    <div class="text-center py-5">
-      <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-folder-x text-muted mb-3" viewBox="0 0 16 16">
-        <path d="M.54 3.87.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3h3.982a2 2 0 0 1 1.992 2.181L15.546 8H14.54l.265-2.91A1 1 0 0 0 13.81 4H9.828a1 1 0 0 1-.707-.293L8.293 2.854A1 1 0 0 0 7.586 2.5H2.5A1 1 0 0 0 1.5 3.5v11A1.5 1.5 0 0 0 3 16h10a1.5 1.5 0 0 0 1.5-1.5V9.932l.259.311.23.275-1.017 1.018a.5.5 0 0 0 .708.707l1.018-1.017.275.23.31.259V14.5A2.5 2.5 0 0 1 13 17H3a2.5 2.5 0 0 1-2.5-2.5V3.87zM8.472 5.432a.5.5 0 0 0-.707-.707l-1.25 1.25-1.25-1.25a.5.5 0 0 0-.707.707L7.043 6.14 5.793 7.39a.5.5 0 1 0 .707.707l1.25-1.25 1.25 1.25a.5.5 0 0 0 .707-.707L8.472 6.14 9.722 4.89z"/>
-      </svg>
-      <h3 class="h5">Belum Ada Data</h3>
-      <p class="text-muted">Saat ini belum ada Lembaga/Kelompok Desa yang dipublikasikan.</p>
+<!-- Stats Section -->
+<div class="stats-section">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
+        <div class="stat-card">
+          <i class="ti ti-building"></i>
+          <h3>{{ $items->total() }}</h3>
+          <p>Total LKD</p>
+        </div>
+      </div>
+      <div class="col-md-3" data-aos="fade-up" data-aos-delay="200">
+        <div class="stat-card">
+          <i class="ti ti-users"></i>
+          <h3>{{ App\Models\LkdMember::count() }}</h3>
+          <p>Total Anggota</p>
+        </div>
+      </div>
+      <div class="col-md-3" data-aos="fade-up" data-aos-delay="300">
+        <div class="stat-card">
+          <i class="ti ti-check"></i>
+          <h3>{{ App\Models\Lkd::where('published', true)->count() }}</h3>
+          <p>LKD Aktif</p>
+        </div>
+      </div>
+      <div class="col-md-3" data-aos="fade-up" data-aos-delay="400">
+        <div class="stat-card">
+          <i class="ti ti-calendar"></i>
+          <h3>{{ \Carbon\Carbon::now()->format('Y') }}</h3>
+          <p>Tahun Aktif</p>
+        </div>
+      </div>
     </div>
-  @else
-    {{-- DAFTAR LEMBAGA/KELOMPOK --}}
-    <div class="row g-4 justify-content-center">
-      @foreach($items as $lkd)
-        {{-- Tambahkan kelas .fade-in-card di sini --}}
-        <div class="col-12 col-md-6 col-lg-4 d-flex fade-in-card"> 
-          {{-- Ubah shadow-sm menjadi shadow --}}
-          <div class="card h-100 shadow-lg card-hover w-100">
-            <a href="{{ route('lkd.show', $lkd) }}" class="text-decoration-none">
-              <img
-                src="{{ $lkd->cover_url }}"
-                alt="{{ $lkd->judul }}"
-                class="card-img-top"
-                style="height:200px; object-fit:cover;"
-                onerror="this.src='{{ asset('images/placeholders/Bpd.png') }}';"
-              >
-            </a>
-            <div class="card-body d-flex flex-column">
-              <h2 class="h5 card-title mb-2">
-                <a href="{{ route('lkd.show', $lkd) }}" class="text-decoration-none text-dark">
-                  {{ $lkd->judul }}
-                </a>
-              </h2>
-              @if(!empty($lkd->excerpt))
-                <p class="card-text text-muted small text-line-clamp-2">{{ $lkd->excerpt }}</p>
-              @endif
-              <div class="mt-auto pt-3 d-flex align-items-center justify-content-between">
-                <small class="text-muted">
-                  {{ optional($lkd->updated_at)->format('d M Y') }}
-                </small>
-                <a href="{{ route('lkd.show', $lkd) }}" class="btn btn-sm btn-primary">
-                  Lihat Detail <i class="bi bi-arrow-right-short"></i>
-                </a>
-              </div>
+  </div>
+</div>
+
+
+
+<!-- LKD List Section -->
+<div class="container" id="lkd-list">
+  <h2 class="text-center mb-5" data-aos="fade-up">
+    <i class="ti ti-building me-3"></i>Daftar LKD Aktif
+  </h2>
+  
+  <div class="row g-4">
+    @forelse($items as $lkd)
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
+        <div class="lkd-card">
+          <!-- Badge Status -->
+          <span class="lkd-badge">
+            <i class="ti ti-circle-filled me-1"></i>{{ $lkd->published ? 'Aktif' : 'Draft' }}
+          </span>
+          
+          <!-- Cover Image - PERBAIKAN DISINI -->
+          @if($lkd->cover_path)
+            <img src="{{ getPhotoUrl($lkd->cover_path, 'https://via.placeholder.com/400x300?text=Cover+LKD') }}" 
+                 class="card-img-top" 
+                 alt="{{ $lkd->judul }}">
+          @else
+            <div class="card-img-top bg-light d-flex align-items-center justify-content-center">
+              <i class="ti ti-photo-off" style="font-size: 3rem; color: #dee2e6;"></i>
             </div>
+          @endif
+          
+          <!-- Card Body -->
+          <div class="card-body">
+            <h5 class="card-title">{{ $lkd->judul }}</h5>
+            <p class="card-text">
+              {{ \Illuminate\Support\Str::limit(strip_tags($lkd->deskripsi), 120) }}
+            </p>
+            
+            <!-- Meta Info -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="text-muted small">
+                <i class="ti ti-users me-1"></i>
+                {{ $lkd->members()->count() }} Anggota
+              </span>
+              <span class="text-muted small">
+                <i class="ti ti-calendar me-1"></i>
+                {{ optional($lkd->updated_at)->format('d M Y') }}
+              </span>
+            </div>
+            
+            <!-- Action Button -->
+            <a href="{{ route('lkd.show',$lkd) }}" class="btn btn-primary w-100">
+              <i class="ti ti-eye me-2"></i>Lihat Detail
+            </a>
           </div>
         </div>
-      @endforeach
-    </div>
-
-    {{-- PAGINASI --}}
-    @if ($items->hasPages())
-      <div class="mt-5 d-flex justify-content-center">
-        {{ $items->links() }}
       </div>
-    @endif
+    @empty
+      <div class="col-12">
+        <div class="empty-state" data-aos="fade-up">
+          <i class="ti ti-building-community"></i>
+          <h4>Belum ada data LKD</h4>
+          <p class="text-muted">Data lembaga kemasyarakatan desa belum tersedia.</p>
+          <a href="{{ route('home') }}" class="btn btn-primary">
+            <i class="ti ti-home me-2"></i>Kembali ke Beranda
+          </a>
+        </div>
+      </div>
+    @endforelse
+  </div>
+  
+  <!-- Pagination -->
+  @if($items->hasPages())
+    <div class="d-flex justify-content-center" data-aos="fade-up" data-aos-delay="200">
+      {{ $items->links() }}
+    </div>
   @endif
 </div>
+
+<!-- Back to Top Button -->
+<button id="backToTop" class="btn btn-primary btn-lg position-fixed bottom-0 end-0 m-3" style="display: none;">
+  <i class="ti ti-arrow-up"></i>
+</button>
 @endsection
 
-
-{{-- JAVASCRIPT UNTUK ANIMASI SCROLL --}}
 @push('scripts')
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    // Opsi untuk Intersection Observer
-    const observerOptions = {
-      root: null, // Menggunakan viewport sebagai root
-      rootMargin: "0px",
-      threshold: 0.1 // Memicu animasi saat 10% elemen terlihat
-    };
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize AOS
+  AOS.init({
+    duration: 800,
+    easing: 'ease-in-out',
+    once: true
+  });
 
-    // Callback function yang dijalankan saat elemen terdeteksi
-    const observerCallback = (entries, observer) => {
-      entries.forEach(entry => {
-        // Jika elemen masuk ke dalam viewport
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible'); // Tambahkan kelas 'visible'
-          observer.unobserve(entry.target); // Hentikan pengamatan setelah animasi berjalan
-        }
-      });
-    };
+  // Filter functionality
+  
 
-    // Buat observer baru
-    const observer = new IntersectionObserver(observerCallback, observerOptions);
-
-    // Ambil semua elemen kartu dan mulai amati
-    const elementsToAnimate = document.querySelectorAll('.fade-in-card');
-    elementsToAnimate.forEach(el => {
-      observer.observe(el);
+  // Back to top button
+  const backToTopButton = document.getElementById('backToTop');
+  
+  window.addEventListener('scroll', function() {
+    if (window.pageYOffset > 300) {
+      backToTopButton.style.display = 'block';
+    } else {
+      backToTopButton.style.display = 'none';
+    }
+  });
+  
+  backToTopButton.addEventListener('click', function() {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
     });
   });
+
+  // Add hover effect to cards
+  const cards = document.querySelectorAll('.lkd-card');
+  cards.forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-15px)';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
+    });
+  });
+});
 </script>
+@endpush
+
+@push('styles')
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 @endpush

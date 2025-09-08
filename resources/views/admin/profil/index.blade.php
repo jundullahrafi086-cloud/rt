@@ -125,7 +125,6 @@
         var fileInput   = document.getElementById('foto');
         var file        = fileInput.files[0];
         var reader      = new FileReader();
-
         reader.onload = function(e){
             preview.src = e.target.result;
         };

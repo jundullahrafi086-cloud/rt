@@ -1,530 +1,404 @@
 @extends('admin.layouts.main')
-
 @section('title','Edit LKD')
-
 @section('content')
+<!-- Flash Messages -->
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="ti ti-check me-2"></i>{{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="ti ti-alert-circle me-2"></i>{{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
+@php
+    // Helper function untuk menampilkan foto
+    function getPhotoUrl($path, $placeholder = 'https://via.placeholder.com/400x400?text=Foto') {
+        return $path ? asset('storage/' . $path) : $placeholder;
+    }
+@endphp
+
 <style>
-  /* ===== UI UPGRADE: lebih besar & lega (sama dgn create) ===== */
-  .member-row {
-    border: 1px solid #e9ecef;
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 14px;
-    background: #fff;
-  }
-  .member-row .form-control,
-  .member-row .form-select {
-    padding: .75rem 1rem;
-    font-size: 1rem;
-  }
-  .member-photo-wrap {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .member-preview {
-    width: 96px;
-    height: 96px;
-    border-radius: 12px;
-    object-fit: cover;
-    border: 1px solid #e9ecef;
-    background: #f8f9fa;
-  }
   .cover-preview {
     width: 100%;
-    max-width: 360px;
-    height: 200px;
-    border-radius: 14px;
+    height: 250px;
     object-fit: cover;
+    border-radius: 12px;
     border: 1px solid #e9ecef;
-    background: #f8f9fa;
+    transition: all 0.3s ease;
   }
-  .controls-sticky {
-    position: sticky;
-    top: 12px;
+  
+  .member-photo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e9ecef;
+    transition: all 0.3s ease;
+  }
+  
+  .member-photo:hover {
+    transform: scale(1.1);
+    border-color: #667eea;
+  }
+  
+  .preview-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #f8f9fa;
+    min-height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .preview-container img {
+    transition: transform 0.3s ease;
+  }
+  
+  .preview-container:hover img {
+    transform: scale(1.05);
+  }
+  
+  .ratio-container {
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%; /* Aspect Ratio 1:1 */
+  }
+  
+  .ratio-container img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 </style>
 
-<div class="row">
-  <div class="col-lg-12 d-flex align-items-stretch">
-    <div class="card shadow-lg w-100">
-
-      {{-- Header --}}
-      <div class="card-header bg-primary">
-        <div class="row align-items-center">
-          <div class="col-6">
-            <h5 class="card-title fw-semibold text-white mb-0">Edit LKD</h5>
-            <small class="text-white-50">{{ $lkd->judul }}</small>
+<!-- Form Edit LKD -->
+<div class="card shadow-lg mb-4">
+  <div class="card-header bg-primary text-white">
+    <h5 class="mb-0"><i class="ti ti-edit me-2"></i>Edit Informasi LKD</h5>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="{{ route('admin.lkd.update', $lkd) }}" enctype="multipart/form-data" id="lkdForm">
+      @csrf @method('PUT')
+      <div class="row g-4">
+        <div class="col-md-8">
+          <div class="mb-3">
+            <label class="form-label">Judul <span class="text-danger">*</span></label>
+            <input type="text" name="judul" class="form-control form-control-lg" value="{{ old('judul',$lkd->judul) }}" required>
           </div>
-          <div class="col-6 text-end">
-            <a href="{{ route('admin.lkd.index') }}" class="btn btn-light">
-              <i class="ti ti-arrow-left"></i> Kembali
-            </a>
+          <div class="mb-3">
+            <label class="form-label">Deskripsi</label>
+            <textarea name="deskripsi" rows="6" class="form-control form-control-lg">{{ old('deskripsi',$lkd->deskripsi) }}</textarea>
+          </div>
+          <div class="form-check form-switch form-switch-lg mb-3">
+            <input class="form-check-input" type="checkbox" name="published" value="1" id="pub" {{ $lkd->published ? 'checked' : '' }}>
+            <label class="form-check-label" for="pub">Publikasikan</label>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg">
+            <i class="ti ti-device-floppy me-2"></i>Update LKD
+          </button>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label class="form-label">Cover Saat Ini</label>
+            <div class="ratio-container mb-2">
+              <img src="{{ getPhotoUrl($lkd->cover_path, 'https://via.placeholder.com/400x400?text=Cover+LKD') }}"
+                   alt="{{ $lkd->judul }}"
+                   id="currentCover">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Ganti Cover</label>
+            <input type="file" name="cover" class="form-control" accept="image/*" id="coverInput">
+            <div class="form-text">JPG, PNG, atau WEBP. Maksimal 2MB.</div>
+          </div>
+          <div class="mt-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="removeCover" name="remove_cover" value="1">
+              <label class="form-check-label" for="removeCover">
+                Hapus cover saat ini
+              </label>
+            </div>
           </div>
         </div>
       </div>
+    </form>
+  </div>
+</div>
 
-      {{-- Body --}}
-      <div class="card-body">
-        <form action="{{ route('admin.lkd.update', $lkd) }}"
-              method="POST"
-              enctype="multipart/form-data"
-              id="lkdForm"
-              autocomplete="off">
-          @csrf
-          @method('PUT')
-
-          <div class="row g-4">
-            <div class="col-lg-8">
-
-              {{-- Judul & Slug --}}
-              <div class="mb-3">
-                <label class="form-label">Judul <span class="text-danger">*</span></label>
-                <input type="text"
-                       name="judul"
-                       class="form-control form-control-lg @error('judul') is-invalid @enderror"
-                       value="{{ old('judul', $lkd->judul) }}"
-                       id="judulInput"
-                       required>
-                @error('judul') <div class="invalid-feedback">{{ $message }}</div> @enderror
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Slug <span class="text-danger">*</span></label>
-                <div class="input-group input-group-lg">
-                  <span class="input-group-text">{{ url('/lkd') }}/</span>
-                  <input type="text"
-                         name="slug"
-                         class="form-control @error('slug') is-invalid @enderror"
-                         value="{{ old('slug', $lkd->slug) }}"
-                         id="slugInput"
-                         required>
-                </div>
-                <small class="text-muted">Slug dipakai sebagai URL publik.</small>
-                @error('slug') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-              </div>
-
-              {{-- Excerpt --}}
-              <div class="mb-3">
-                <label class="form-label">Ringkasan / Excerpt</label>
-                <textarea name="excerpt"
-                          class="form-control form-control-lg @error('excerpt') is-invalid @enderror"
-                          rows="2">{{ old('excerpt', $lkd->excerpt) }}</textarea>
-                @error('excerpt') <div class="invalid-feedback">{{ $message }}</div> @enderror
-              </div>
-
-              {{-- Body --}}
-              <div class="mb-4">
-                <label class="form-label">Deskripsi / Struktur</label>
-                <textarea name="body"
-                          class="form-control form-control-lg @error('body') is-invalid @enderror"
-                          rows="6"
-                          placeholder="Struktur organisasi, tugas pokok & fungsi, dll.">{{ old('body', $lkd->body) }}</textarea>
-                @error('body') <div class="invalid-feedback">{{ $message }}</div> @enderror
-              </div>
-
-              {{-- Anggota --}}
-              <div class="d-flex align-items-center justify-content-between mb-2">
-                <h5 class="mb-0">Anggota</h5>
-                <div class="d-flex gap-2">
-                  <button class="btn btn-outline-primary" type="button" id="addMemberBtn">
-                    <i class="ti ti-plus"></i> Tambah Anggota
-                  </button>
-                  <button class="btn btn-outline-secondary" type="button" id="addBatchBtn">
-                    <i class="ti ti-list"></i> Tambah 3 Baris
-                  </button>
-                </div>
-              </div>
-
-              <div id="membersList">
-                @php $oldMembers = old('members'); @endphp
-
-                @if (is_array($oldMembers))
-                  @foreach ($oldMembers as $idx => $m)
-                    <div class="member-row">
-                      @if (!empty($m['id']))
-                        <input type="hidden" name="members[{{ $idx }}][id]" value="{{ $m['id'] }}">
-                      @endif
-
-                      <div class="row g-3">
-                        <div class="col-md-6">
-                          <label class="form-label">Nama</label>
-                          <input type="text" name="members[{{ $idx }}][nama]"
-                                 class="form-control @error("members.$idx.nama") is-invalid @enderror"
-                                 value="{{ $m['nama'] ?? '' }}" placeholder="Nama lengkap">
-                          @error("members.$idx.nama") <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="col-md-6">
-                          <label class="form-label">Jabatan</label>
-                          <input type="text" name="members[{{ $idx }}][jabatan]"
-                                 class="form-control @error("members.$idx.jabatan") is-invalid @enderror"
-                                 value="{{ $m['jabatan'] ?? '' }}" placeholder="Ketua/Anggota/RT 01/…">
-                          @error("members.$idx.jabatan") <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div class="col-md-6">
-                          <label class="form-label">Kontak</label>
-                          <input type="text" name="members[{{ $idx }}][kontak]"
-                                 class="form-control @error("members.$idx.kontak") is-invalid @enderror"
-                                 value="{{ $m['kontak'] ?? '' }}" placeholder="No HP / Email (opsional)">
-                          @error("members.$idx.kontak") <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div class="col-md-6">
-                          <label class="form-label">Foto</label>
-                          <div class="member-photo-wrap">
-                            <input type="file" name="members[{{ $idx }}][foto]"
-                                   class="form-control member-foto-input @error("members.$idx.foto") is-invalid @enderror"
-                                   accept="image/*">
-                            <img class="member-preview d-none" alt="preview">
-                          </div>
-                          <div class="small text-muted mt-1">jpg,jpeg,png,webp maks 2MB</div>
-                          @error("members.$idx.foto") <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-
-                          @if (!empty($m['id']))
-                            @php $existing = $lkd->members->firstWhere('id', (int)$m['id']); @endphp
-                            @if ($existing && $existing->foto_url)
-                              <div class="small mt-2">Foto saat ini:</div>
-                              <img src="{{ $existing->foto_url }}" alt="foto"
-                                   class="member-preview"
-                                   onerror="this.style.display='none'">
-                            @endif
-                          @endif
-                        </div>
-
-                        <div class="col-12 d-flex justify-content-between">
-                          @if (!empty($m['id']))
-                            <div class="form-check">
-                              <input class="form-check-input" type="checkbox" value="1" id="del{{$m['id']}}"
-                                     name="members[{{ $idx }}][_delete]">
-                              <label class="form-check-label" for="del{{$m['id']}}">
-                                Hapus anggota ini
-                              </label>
-                            </div>
-                          @endif
-                          <button type="button" class="btn btn-outline-danger removeRowBtn">
-                            <i class="ti ti-x"></i> Hapus baris
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  @endforeach
-                @else
-                  {{-- Render dari database --}}
-                  @foreach ($lkd->members as $i => $m)
-                    <div class="member-row">
-                      <input type="hidden" name="members[{{ $i }}][id]" value="{{ $m->id }}">
-                      <div class="row g-3">
-                        <div class="col-md-6">
-                          <label class="form-label">Nama</label>
-                          <input type="text" name="members[{{ $i }}][nama]" class="form-control" value="{{ $m->nama }}" placeholder="Nama lengkap">
-                        </div>
-                        <div class="col-md-6">
-                          <label class="form-label">Jabatan</label>
-                          <input type="text" name="members[{{ $i }}][jabatan]" class="form-control" value="{{ $m->jabatan }}" placeholder="Ketua/Anggota/RT 01/…">
-                        </div>
-
-                        <div class="col-md-6">
-                          <label class="form-label">Kontak</label>
-                          <input type="text" name="members[{{ $i }}][kontak]" class="form-control" value="{{ $m->kontak }}" placeholder="No HP / Email (opsional)">
-                        </div>
-
-                        <div class="col-md-6">
-                          <label class="form-label">Foto</label>
-                          <div class="member-photo-wrap">
-                            <input type="file" name="members[{{ $i }}][foto]" class="form-control member-foto-input" accept="image/*">
-                            <img class="member-preview d-none" alt="preview">
-                          </div>
-                          @if ($m->foto_url)
-                            <div class="small mt-2">Foto saat ini:</div>
-                            <img src="{{ $m->foto_url }}" alt="foto" class="member-preview" onerror="this.style.display='none'">
-                          @endif
-                        </div>
-
-                        <div class="col-12 d-flex justify-content-between">
-                          <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="1" id="del{{$m->id}}"
-                                   name="members[{{ $i }}][_delete]">
-                            <label class="form-check-label" for="del{{$m->id}}">
-                              Hapus anggota ini
-                            </label>
-                          </div>
-                          <button type="button" class="btn btn-outline-danger removeRowBtn">
-                            <i class="ti ti-x"></i> Hapus baris
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  @endforeach
-
-                  {{-- Tambah 1 kartu kosong --}}
-                  @php $startIdx = max( (count($lkd->members) ?: 0) , 0 ); @endphp
-                  <div class="member-row">
-                    <div class="row g-3">
-                      <div class="col-md-6">
-                        <label class="form-label">Nama</label>
-                        <input type="text" name="members[{{ $startIdx }}][nama]" class="form-control" placeholder="Nama lengkap">
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label">Jabatan</label>
-                        <input type="text" name="members[{{ $startIdx }}][jabatan]" class="form-control" placeholder="Ketua/Anggota/RT 01/…">
-                      </div>
-
-                      <div class="col-md-6">
-                        <label class="form-label">Kontak</label>
-                        <input type="text" name="members[{{ $startIdx }}][kontak]" class="form-control" placeholder="No HP / Email (opsional)">
-                      </div>
-
-                      <div class="col-md-6">
-                        <label class="form-label">Foto</label>
-                        <div class="member-photo-wrap">
-                          <input type="file" name="members[{{ $startIdx }}][foto]" class="form-control member-foto-input" accept="image/*">
-                          <img class="member-preview d-none" alt="preview">
-                        </div>
-                        <div class="small text-muted mt-1">jpg,jpeg,png,webp maks 2MB</div>
-                      </div>
-
-                      <div class="col-12 d-flex justify-content-end">
-                        <button type="button" class="btn btn-outline-danger removeRowBtn">
-                          <i class="ti ti-x"></i> Hapus baris
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                @endif
-              </div>
-
-            </div>
-
-            <div class="col-lg-4">
-              <div class="controls-sticky">
-
-                {{-- Cover --}}
-                <div class="mb-3">
-                  <label class="form-label">Cover (gambar utama)</label>
-                  <input type="file"
-                         name="cover"
-                         class="form-control @error('cover') is-invalid @enderror"
-                         accept="image/*"
-                         id="coverInput">
-                  <div class="small text-muted">jpg,jpeg,png,webp maks 2MB</div>
-                  @error('cover') <div class="invalid-feedback">{{ $message }}</div> @enderror>
-
-                  <div class="mt-2">
-                    <img id="coverPreview"
-                         src="{{ $lkd->cover_url }}"
-                         alt="cover preview"
-                         class="cover-preview"
-                         onerror="this.style.display='none'">
-                  </div>
-                </div>
-
-                {{-- Publish & Urutan --}}
-                <div class="mb-3">
-                  <div class="form-check form-switch">
-                    <input class="form-check-input"
-                           type="checkbox"
-                           role="switch"
-                           id="publishSwitch"
-                           name="is_published"
-                           value="1"
-                           {{ old('is_published', $lkd->is_published) ? 'checked' : '' }}>
-                    <label class="form-check-label" for="publishSwitch">Publish</label>
-                  </div>
-                  @error('is_published') <div class="text-danger small">{{ $message }}</div> @enderror
-                </div>
-
-                <div class="mb-4">
-                  <label class="form-label">Nomor Urut</label>
-                  <input type="number"
-                         name="order_no"
-                         class="form-control form-control-lg @error('order_no') is-invalid @enderror"
-                         value="{{ old('order_no', $lkd->order_no) }}"
-                         min="0" step="1" style="max-width:220px">
-                  <small class="text-muted">Semakin kecil semakin atas.</small>
-                  @error('order_no') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                </div>
-
-                {{-- Actions --}}
-                <div class="d-grid gap-2">
-                  <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
-                    <i class="ti ti-device-floppy"></i> Simpan Perubahan
-                  </button>
-                  <a href="{{ route('admin.lkd.index') }}" class="btn btn-outline-secondary btn-lg">
-                    Batal
-                  </a>
-                </div>
-
-              </div>
-            </div>
+<!-- Form Tambah Anggota -->
+<div class="card shadow-lg mb-4">
+  <div class="card-header bg-success text-white">
+    <h5 class="mb-0"><i class="ti ti-user-plus me-2"></i>Tambah Anggota Baru</h5>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="{{ route('admin.lkd.members.store',$lkd) }}" enctype="multipart/form-data" id="memberForm">
+      @csrf
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Nama <span class="text-danger">*</span></label>
+          <input type="text" name="nama" class="form-control" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Jabatan</label>
+          <input type="text" name="jabatan" class="form-control">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Kategori</label>
+          <select name="kategori" class="form-select">
+            <option value="">-- Pilih Kategori --</option>
+            <option value="struktur">Struktur</option>
+            <option value="rt">RT</option>
+            <option value="rw">RW</option>
+            <option value="pkk">PKK</option>
+            <option value="karang_taruna">Karang Taruna</option>
+            <option value="lainnya">Lainnya</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Urutan</label>
+          <input type="number" name="order_no" class="form-control" min="0" value="0">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Foto</label>
+          <input type="file" name="foto" class="form-control" accept="image/*">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Kontak</label>
+          <input type="text" name="kontak" class="form-control" placeholder="No HP/Email">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <div class="form-check form-switch mt-3">
+            <input class="form-check-input" type="checkbox" name="is_active" value="1" id="active" checked>
+            <label class="form-check-label" for="active">Aktif</label>
           </div>
-
-        </form>
+        </div>
+        <div class="col-12 mt-3">
+          <button type="submit" class="btn btn-success">
+            <i class="ti ti-user-plus me-2"></i>Tambah Anggota
+          </button>
+        </div>
       </div>
+    </form>
+  </div>
+</div>
 
+<!-- Tabel Anggota -->
+<div class="card shadow-lg">
+  <div class="card-header bg-info text-white">
+    <h5 class="mb-0"><i class="ti ti-users me-2"></i>Daftar Anggota LKD</h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th style="width:80px">Foto</th>
+            <th>Nama</th>
+            <th>Jabatan</th>
+            <th>Kategori</th>
+            <th>Urutan</th>
+            <th>Kontak</th>
+            <th>Status</th>
+            <th style="width:180px">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($lkd->members as $m)
+          <tr>
+            <td>
+              <div class="ratio ratio-1x1" style="width: 60px; height: 60px;">
+                <img src="{{ getPhotoUrl($m->foto_path, 'https://via.placeholder.com/60x60?text=Foto') }}"
+                     class="rounded-circle"
+                     alt="{{ $m->nama }}">
+              </div>
+            </td>
+            <td>
+              <div class="fw-semibold">{{ $m->nama }}</div>
+            </td>
+            <td>{{ $m->jabatan }}</td>
+            <td>
+              <span class="badge bg-light text-dark">{{ $m->kategori }}</span>
+            </td>
+            <td>
+              <span class="badge bg-primary">{{ $m->order_no }}</span>
+            </td>
+            <td>{{ $m->kontak ?: '-' }}</td>
+            <td>
+              <span class="badge {{ $m->is_active ? 'bg-success' : 'bg-danger' }}">
+                {{ $m->is_active ? 'Aktif' : 'Tidak Aktif' }}
+              </span>
+            </td>
+            <td>
+              <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal{{ $m->id }}">
+                  <i class="ti ti-edit"></i>
+                </button>
+                <button type="button" class="btn btn-danger swal-confirm-delete" data-id="{{ $m->id }}" data-name="{{ $m->nama }}">
+                  <i class="ti ti-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          @empty
+          <tr>
+            <td colspan="8" class="text-center py-4 text-muted">
+              <i class="ti ti-users me-2" style="font-size: 1.5rem;"></i>
+              <div>Belum ada anggota</div>
+              <small class="text-muted">Tambahkan anggota menggunakan form di atas</small>
+            </td>
+          </tr>
+          @endforelse
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
-@endsection
 
+<!-- Modal Edit untuk setiap anggota -->
+@forelse($lkd->members as $m)
+<div class="modal fade" id="editModal{{ $m->id }}" tabindex="-1" aria-labelledby="editModalLabel{{ $m->id }}" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title" id="editModalLabel{{ $m->id }}">Edit Anggota: {{ $m->nama }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{{ route('admin.lkd.members.update', [$lkd,$m]) }}" enctype="multipart/form-data" id="editForm{{ $m->id }}">
+          @csrf @method('PUT')
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Nama</label>
+              <input type="text" name="nama" class="form-control" value="{{ $m->nama }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Jabatan</label>
+              <input type="text" name="jabatan" class="form-control" value="{{ $m->jabatan }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Kategori</label>
+              <select name="kategori" class="form-select">
+                <option value="">-- Pilih Kategori --</option>
+                <option value="struktur" {{ $m->kategori == 'struktur' ? 'selected' : '' }}>Struktur</option>
+                <option value="rt" {{ $m->kategori == 'rt' ? 'selected' : '' }}>RT</option>
+                <option value="rw" {{ $m->kategori == 'rw' ? 'selected' : '' }}>RW</option>
+                <option value="pkk" {{ $m->kategori == 'pkk' ? 'selected' : '' }}>PKK</option>
+                <option value="karang_taruna" {{ $m->kategori == 'karang_taruna' ? 'selected' : '' }}>Karang Taruna</option>
+                <option value="lainnya" {{ $m->kategori == 'lainnya' ? 'selected' : '' }}>Lainnya</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Urutan</label>
+              <input type="number" name="order_no" class="form-control" min="0" value="{{ $m->order_no }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Kontak</label>
+              <input type="text" name="kontak" class="form-control" value="{{ $m->kontak }}" placeholder="No HP/Email">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Foto</label>
+              <input type="file" name="foto" class="form-control" accept="image/*">
+              <div class="form-text">Kosongkan jika tidak ingin mengubah foto</div>
+              <!-- Preview foto saat ini -->
+              <div class="mt-2">
+                <div class="ratio ratio-1x1" style="width: 100px; height: 100px;">
+                  <img src="{{ getPhotoUrl($m->foto_path, 'https://via.placeholder.com/100x100?text=Foto') }}"
+                       class="img-thumbnail rounded"
+                       alt="Foto saat ini">
+                </div>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="is_active" value="1" id="active{{ $m->id }}" {{ $m->is_active ? 'checked' : '' }}>
+                <label class="form-check-label" for="active{{ $m->id }}">Aktif</label>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-warning" onclick="document.getElementById('editForm{{ $m->id }}').submit()">
+          <i class="ti ti-device-floppy me-2"></i>Simpan Perubahan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+@empty
+@endforelse
+@endsection
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  /* ========== Util: slugify ========== */
-  function slugify(str) {
-    return (str || '')
-      .toString()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-zA-Z0-9\s-]/g, '')
-      .trim()
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .toLowerCase();
-  }
-
-  /* ========== Elemen dasar ========== */
-  const form        = document.getElementById('lkdForm');
-  const submitBtn   = document.getElementById('submitBtn');
-  const judulInput  = document.getElementById('judulInput');
-  const slugInput   = document.getElementById('slugInput');
-  const coverInput  = document.getElementById('coverInput');
-  const coverPreview= document.getElementById('coverPreview');
-
-  const membersList = document.getElementById('membersList');
-  const addBtn      = document.getElementById('addMemberBtn');
-  const add3Btn     = document.getElementById('addBatchBtn');
-
-  /* ========== Slug otomatis (non-intrusive) ========== */
-  let slugUserEdited = false;
-  if (slugInput) slugInput.addEventListener('input', () => slugUserEdited = true);
-  if (judulInput && slugInput) {
-    judulInput.addEventListener('input', function () {
-      if (!slugUserEdited) slugInput.value = slugify(this.value);
-    });
-  }
-
-  /* ========== Cegah submit ganda ========== */
-  if (form && submitBtn) {
-    form.addEventListener('submit', function () {
-      submitBtn.disabled = true;
-      submitBtn.innerHTML =
-        '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Menyimpan...';
-    });
-  }
-
-  /* ========== Preview cover ========== */
-  if (coverInput && coverPreview) {
-    coverInput.addEventListener('change', function (e) {
-      const f = e.target.files && e.target.files[0];
-      if (!f) return;
-      const reader = new FileReader();
-      reader.onload = ev => { coverPreview.src = ev.target.result; coverPreview.style.display = 'block'; };
-      reader.readAsDataURL(f);
-    });
-  }
-
-  /* ========== TEMPLATE KARTU ANGGOTA BARU ========== */
-  function newMemberCard(index) {
-    return `
-      <div class="member-row" data-row>
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Nama</label>
-            <input type="text" name="members[${index}][nama]" class="form-control" placeholder="Nama lengkap">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Jabatan</label>
-            <input type="text" name="members[${index}][jabatan]" class="form-control" placeholder="Ketua/Anggota/RT 01/…">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Kontak</label>
-            <input type="text" name="members[${index}][kontak]" class="form-control" placeholder="No HP / Email (opsional)">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Foto</label>
-            <div class="member-photo-wrap">
-              <input type="file" name="members[${index}][foto]" class="form-control member-foto-input" accept="image/*">
-              <img class="member-preview d-none" alt="preview">
-            </div>
-            <div class="small text-muted mt-1">jpg,jpeg,png,webp maks 2MB</div>
-          </div>
-          <div class="col-12 d-flex justify-content-end">
-            <button type="button" class="btn btn-outline-danger removeRowBtn">
-              <i class="ti ti-x"></i> Hapus baris
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  /* ========== Hitung index berikutnya yang aman ========== */
-  function nextMemberIndex() {
-    const inputs = membersList.querySelectorAll('input[name^="members["][name$="[nama]"]');
-    let max = -1;
-    inputs.forEach(inp => {
-      const m = inp.name.match(/^members\[(\d+)\]\[nama\]$/);
-      if (m) max = Math.max(max, parseInt(m[1], 10));
-    });
-    return max + 1;
-  }
-
-  /* ========== Tambah Anggota ========== */
-  if (addBtn) {
-    addBtn.addEventListener('click', function () {
-      const idx = nextMemberIndex();
-      membersList.insertAdjacentHTML('beforeend', newMemberCard(idx));
-    });
-  }
-
-  /* ========== Tambah 3 Baris ========== */
-  if (add3Btn) {
-    add3Btn.addEventListener('click', function () {
-      let html = '';
-      for (let i = 0; i < 3; i++) {
-        html += newMemberCard(nextMemberIndex());
+document.addEventListener('DOMContentLoaded', function() {
+  // Preview cover saat memilih file baru
+  const coverInput = document.getElementById('coverInput');
+  const currentCover = document.getElementById('currentCover');
+  
+  if (coverInput && currentCover) {
+    coverInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          currentCover.src = event.target.result;
+        }
+        reader.readAsDataURL(file);
       }
-      membersList.insertAdjacentHTML('beforeend', html);
     });
   }
 
-  /* ========== Event Delegation: Hapus & Preview Foto ========== */
-  membersList.addEventListener('click', function (e) {
-    const btn = e.target.closest('.removeRowBtn');
-    if (!btn) return;
-
-    const rows = membersList.querySelectorAll('[data-row]');
-    if (rows.length <= 1) return; // sisakan minimal 1
-
-    const row = btn.closest('[data-row]');
-    if (!row) return;
-
-    // Jika baris ini punya hidden id (anggota lama) dan user ingin hapus,
-    // biarkan user pakai checkbox "Hapus anggota ini" yang sudah ada.
-    // Di sini kita hanya menghapus baris dari UI (draft input baru).
-    const hiddenId = row.querySelector('input[type="hidden"][name^="members"][name$="[id]"]');
-    if (hiddenId) {
-      // Kalau mau tegas, cukup kosongkan field input agar tidak ter-update,
-      // tapi lebih aman: tetap biarkan user pakai checkbox hapus khusus.
-      row.remove();
-    } else {
-      row.remove();
-    }
+  // SweetAlert2 untuk konfirmasi hapus
+  document.querySelectorAll('.swal-confirm-delete').forEach(button => {
+    button.addEventListener('click', function() {
+      const id = this.getAttribute('data-id');
+      const name = this.getAttribute('data-name');
+      
+      Swal.fire({
+        title: 'Apakah Anda yakin?',
+        text: `Anggota "${name}" akan dihapus!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Ya, hapus!',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Find the form and submit it
+          const form = this.closest('tr').querySelector('form[method="POST"][action*="destroy"]');
+          if (form) {
+            form.submit();
+          }
+        }
+      });
+    });
   });
 
-  membersList.addEventListener('change', function (e) {
-    if (!e.target.matches('.member-foto-input')) return;
-    const file = e.target.files && e.target.files[0];
-    const img = e.target.closest('.member-photo-wrap')?.querySelector('.member-preview');
-    if (!img) return;
-    if (!file) { img.classList.add('d-none'); return; }
-    const reader = new FileReader();
-    reader.onload = ev => { img.src = ev.target.result; img.classList.remove('d-none'); };
-    reader.readAsDataURL(file);
-  });
+  // Handle remove cover checkbox
+  const removeCoverCheckbox = document.getElementById('removeCover');
+  if (removeCoverCheckbox) {
+    removeCoverCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        coverInput.disabled = true;
+      } else {
+        coverInput.disabled = false;
+      }
+    });
+  }
 });
 </script>
 @endpush
-
-

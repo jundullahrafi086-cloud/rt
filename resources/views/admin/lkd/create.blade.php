@@ -1,454 +1,342 @@
-{{-- resources/views/admin/lkd/create.blade.php --}}
 @extends('admin.layouts.main')
-
 @section('title','Tambah LKD')
-
 @section('content')
 <style>
-  /* ===== UI UPGRADE ===== */
-  .member-row {
-    border: 1px solid #e9ecef;
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 14px;
-    background: #fff;
+  .card-custom {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
   }
-  .member-row .form-control,
-  .member-row .form-select {
-    padding: .75rem 1rem;
-    font-size: 1rem;
+  
+  .card-custom:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
   }
-  .member-photo-wrap {
+  
+  .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+  }
+  
+  .form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+  }
+  
+  .form-control:focus, .form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+  
+  .btn-custom {
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .preview-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #f8f9fa;
+    min-height: 250px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: center;
+    border: 2px dashed #dee2e6;
+    transition: all 0.3s ease;
   }
-  .member-preview {
-    width: 100px;
-    height: 100px;
-    border-radius: 12px;
+  
+  .preview-container:hover {
+    border-color: #667eea;
+    background: #f0f4ff;
+  }
+  
+  .preview-container img {
+    max-width: 100%;
+    max-height: 250px;
     object-fit: cover;
-    border: 1px solid #e9ecef;
-    background: #f8f9fa;
+    border-radius: 8px;
+    transition: transform 0.3s ease;
   }
-  .cover-preview {
-    width: 100%;
-    max-width: 380px;
-    height: 210px;
-    border-radius: 14px;
-    object-fit: cover;
-    border: 1px solid #e9ecef;
-    background: #f8f9fa;
+  
+  .preview-container:hover img {
+    transform: scale(1.02);
   }
-  .controls-sticky { position: sticky; top: 12px; }
+  
+  .slug-preview {
+    font-family: 'Courier New', monospace;
+    background: #f8f9fa;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    font-size: 0.9rem;
+    color: #6c757d;
+  }
+  
+  .input-group-text {
+    background: #f8f9fa;
+    border-color: #ced4da;
+    color: #6c757d;
+  }
+  
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+    position: relative;
+  }
+  
+  .section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+  }
 </style>
 
-<div class="row">
-  <div class="col-lg-12 d-flex align-items-stretch">
-    <div class="card shadow-lg w-100">
-
-      {{-- Header --}}
-      <div class="card-header bg-primary">
-        <div class="row align-items-center">
-          <div class="col-6">
-            <h5 class="card-title fw-semibold text-white mb-0">Tambah LKD</h5>
-            <small class="text-white-50">Buat Lembaga/Kelompok Desa & tambahkan anggota sekaligus</small>
+<div class="card card-custom" data-aos="fade-up">
+  <div class="card-header bg-primary text-white">
+    <h5 class="mb-0"><i class="ti ti-plus me-2"></i>Tambah LKD Baru</h5>
+  </div>
+  <div class="card-body p-4">
+    <form method="POST" action="{{ route('admin.lkd.store') }}" enctype="multipart/form-data" id="createForm">
+      @csrf
+      <div class="row g-4">
+        <div class="col-md-8">
+          <div class="mb-3">
+            <label class="form-label">Judul <span class="text-danger">*</span></label>
+            <input type="text" 
+                   name="judul" 
+                   class="form-control form-control-lg" 
+                   value="{{ old('judul') }}" 
+                   required 
+                   id="judulInput"
+                   placeholder="Masukkan judul LKD">
           </div>
-          <div class="col-6 text-end">
-            <a href="{{ route('admin.lkd.index') }}" class="btn btn-light" role="button">
-              <i class="ti ti-arrow-left"></i> Kembali
+          
+          <div class="mb-3">
+            <label class="form-label">Slug <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">{{ url('/lkd') }}/</span>
+              <input type="text" 
+                     name="slug" 
+                     class="form-control" 
+                     value="{{ old('slug') }}" 
+                     required 
+                     id="slugInput"
+                     placeholder="slug-lkd">
+            </div>
+            <div class="form-text">Slug akan digunakan sebagai URL publik. Akan otomatis diisi dari judul jika kosong.</div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Deskripsi</label>
+            <textarea name="deskripsi" 
+                      rows="6" 
+                      class="form-control form-control-lg" 
+                      placeholder="Masukkan deskripsi LKD...">{{ old('deskripsi') }}</textarea>
+          </div>
+          
+          <div class="form-check form-switch form-switch-lg mb-3">
+            <input class="form-check-input" 
+                   type="checkbox" 
+                   name="published" 
+                   value="1" 
+                   id="pub" 
+                   {{ old('published') ? 'checked' : '' }}>
+            <label class="form-check-label" for="pub">
+              <i class="ti ti-world me-2"></i>Publikasikan sekarang
+            </label>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label class="form-label">Cover LKD</label>
+            <div class="preview-container mb-3" id="coverPreviewContainer">
+              <div class="text-center text-muted">
+                <i class="ti ti-photo" style="font-size: 3rem;"></i>
+                <p class="mt-2">Preview Cover</p>
+                <small>Pilih gambar untuk melihat preview</small>
+              </div>
+            </div>
+            <input type="file" 
+                   name="cover" 
+                   class="form-control" 
+                   accept="image/*" 
+                   id="coverInput">
+            <div class="form-text mt-2">
+              <i class="ti ti-info-circle me-1"></i>
+              Format: JPG, PNG, atau WEBP. Maksimal 2MB.
+            </div>
+          </div>
+          
+          <div class="alert alert-info">
+            <i class="ti ti-bulb me-2"></i>
+            <strong>Tip:</strong> Cover yang menarik akan membuat LKD Anda lebih profesional.
+          </div>
+        </div>
+      </div>
+      
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="d-flex gap-3">
+            <button type="submit" class="btn btn-primary btn-custom btn-lg">
+              <i class="ti ti-device-floppy me-2"></i>Simpan LKD
+            </button>
+            <a href="{{ route('admin.lkd.index') }}" class="btn btn-secondary btn-custom btn-lg">
+              <i class="ti ti-arrow-left me-2"></i>Kembali
             </a>
           </div>
         </div>
       </div>
-
-      {{-- Body --}}
-      <div class="card-body">
-        <form action="{{ route('admin.lkd.store') }}"
-              method="POST"
-              enctype="multipart/form-data"
-              id="lkdForm"
-              autocomplete="off">
-          @csrf
-
-          <div class="row g-4">
-            <div class="col-lg-8">
-
-              {{-- Judul & Slug --}}
-              <div class="mb-3">
-                <label class="form-label">Judul <span class="text-danger">*</span></label>
-                <input type="text"
-                       name="judul"
-                       class="form-control form-control-lg @error('judul') is-invalid @enderror"
-                       placeholder="contoh: Badan Permusyawaratan Desa (BPD)"
-                       value="{{ old('judul') }}"
-                       id="judulInput"
-                       required>
-                @error('judul') <div class="invalid-feedback">{{ $message }}</div> @enderror
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Slug <span class="text-danger">*</span></label>
-                <div class="input-group input-group-lg">
-                  <span class="input-group-text">{{ url('/lkd') }}/</span>
-                  <input type="text"
-                         name="slug"
-                         class="form-control @error('slug') is-invalid @enderror"
-                         placeholder="badan-permusyawaratan-desa-bpd"
-                         value="{{ old('slug') }}"
-                         id="slugInput"
-                         required>
-                </div>
-                <small class="text-muted">Slug dipakai sebagai URL publik.</small>
-                @error('slug') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-              </div>
-
-              {{-- Excerpt --}}
-              <div class="mb-3">
-                <label class="form-label">Ringkasan / Excerpt</label>
-                <textarea name="excerpt"
-                          class="form-control form-control-lg @error('excerpt') is-invalid @enderror"
-                          rows="2"
-                          placeholder="Ringkasan singkat (opsional)">{{ old('excerpt') }}</textarea>
-                @error('excerpt') <div class="invalid-feedback">{{ $message }}</div> @enderror
-              </div>
-
-              {{-- Body --}}
-              <div class="mb-4">
-                <label class="form-label">Deskripsi / Struktur</label>
-                <textarea name="body"
-                          class="form-control form-control-lg @error('body') is-invalid @enderror"
-                          rows="6"
-                          placeholder="Tulis deskripsi, struktur organisasi, tugas pokok & fungsi, dll.">{{ old('body') }}</textarea>
-                @error('body') <div class="invalid-feedback">{{ $message }}</div> @enderror
-              </div>
-
-              {{-- Anggota (Mass Input) --}}
-              <div class="d-flex align-items-center justify-content-between mb-2">
-                <h5 class="mb-0">Anggota</h5>
-                <div class="d-flex gap-2">
-                  <button class="btn btn-outline-primary" type="button" id="addMemberBtn">
-                    <i class="ti ti-plus"></i> Tambah Anggota
-                  </button>
-                  <button class="btn btn-outline-secondary" type="button" id="addBatchBtn">
-                    <i class="ti ti-list"></i> Tambah 3 Baris
-                  </button>
-                </div>
-              </div>
-
-              <div id="membersList" data-next-index="{{ max(1, count(old('members', []))) }}">
-                @php $oldMembers = old('members', []); @endphp
-
-                @forelse ($oldMembers as $idx => $m)
-                  <div class="member-row" data-row>
-                    <div class="row g-3">
-                      <div class="col-md-6">
-                        <label class="form-label">Nama</label>
-                        <input type="text" name="members[{{ $idx }}][nama]"
-                               class="form-control @error("members.$idx.nama") is-invalid @enderror"
-                               value="{{ $m['nama'] ?? '' }}" placeholder="Nama lengkap">
-                        @error("members.$idx.nama") <div class="invalid-feedback">{{ $message }}</div> @enderror
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label">Jabatan</label>
-                        <input type="text" name="members[{{ $idx }}][jabatan]"
-                               class="form-control @error("members.$idx.jabatan") is-invalid @enderror"
-                               value="{{ $m['jabatan'] ?? '' }}" placeholder="Ketua/Anggota/RT 01/…">
-                        @error("members.$idx.jabatan") <div class="invalid-feedback">{{ $message }}</div> @enderror
-                      </div>
-
-                      <div class="col-md-6">
-                        <label class="form-label">Kontak</label>
-                        <input type="text" name="members[{{ $idx }}][kontak]"
-                               class="form-control @error("members.$idx.kontak") is-invalid @enderror"
-                               value="{{ $m['kontak'] ?? '' }}" placeholder="No HP / Email (opsional)">
-                        @error("members.$idx.kontak") <div class="invalid-feedback">{{ $message }}</div> @enderror
-                      </div>
-
-                      <div class="col-md-6">
-                        <label class="form-label">Foto</label>
-                        <div class="member-photo-wrap">
-                          <input type="file" name="members[{{ $idx }}][foto]"
-                                 class="form-control member-foto-input @error("members.$idx.foto") is-invalid @enderror"
-                                 accept="image/*">
-                          <img class="member-preview d-none" alt="preview">
-                        </div>
-                        <div class="small text-muted mt-1">jpg,jpeg,png,webp maks 2MB</div>
-                        @error("members.$idx.foto") <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-                      </div>
-
-                      <div class="col-12 d-flex justify-content-end">
-                        <button type="button" class="btn btn-outline-danger removeRowBtn">
-                          <i class="ti ti-x"></i> Hapus baris
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                @empty
-                  {{-- 1 kartu default --}}
-                  <div class="member-row" data-row>
-                    <div class="row g-3">
-                      <div class="col-md-6">
-                        <label class="form-label">Nama</label>
-                        <input type="text" name="members[0][nama]" class="form-control" placeholder="Nama lengkap">
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label">Jabatan</label>
-                        <input type="text" name="members[0][jabatan]" class="form-control" placeholder="Ketua/Anggota/RT 01/…">
-                      </div>
-
-                      <div class="col-md-6">
-                        <label class="form-label">Kontak</label>
-                        <input type="text" name="members[0][kontak]" class="form-control" placeholder="No HP / Email (opsional)">
-                      </div>
-
-                      <div class="col-md-6">
-                        <label class="form-label">Foto</label>
-                        <div class="member-photo-wrap">
-                          <input type="file" name="members[0][foto]" class="form-control member-foto-input" accept="image/*">
-                          <img class="member-preview d-none" alt="preview">
-                        </div>
-                        <div class="small text-muted mt-1">jpg,jpeg,png,webp maks 2MB</div>
-                      </div>
-
-                      <div class="col-12 d-flex justify-content-end">
-                        <button type="button" class="btn btn-outline-danger removeRowBtn">
-                          <i class="ti ti-x"></i> Hapus baris
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                @endforelse
-              </div>
-
-            </div>
-
-            <div class="col-lg-4">
-              <div class="controls-sticky">
-
-                {{-- Cover --}}
-                <div class="mb-3">
-                  <label class="form-label">Cover (gambar utama)</label>
-                  <input type="file"
-                         name="cover"
-                         class="form-control @error('cover') is-invalid @enderror"
-                         accept="image/*"
-                         id="coverInput">
-                  <div class="small text-muted">jpg,jpeg,png,webp maks 2MB</div>
-                  @error('cover') <div class="invalid-feedback">{{ $message }}</div> @enderror
-
-                  <div class="mt-2">
-                    <img id="coverPreview" alt="cover preview" class="cover-preview d-none">
-                  </div>
-                </div>
-
-                {{-- Publish & Urutan --}}
-                <div class="mb-3">
-                  <div class="form-check form-switch">
-                    <input class="form-check-input"
-                           type="checkbox"
-                           role="switch"
-                           id="publishSwitch"
-                           name="is_published"
-                           value="1"
-                           {{ old('is_published', true) ? 'checked' : '' }}>
-                    <label class="form-check-label" for="publishSwitch">Publish</label>
-                  </div>
-                  @error('is_published') <div class="text-danger small">{{ $message }}</div> @enderror
-                </div>
-
-                <div class="mb-4">
-                  <label class="form-label">Nomor Urut</label>
-                  <input type="number"
-                         name="order_no"
-                         class="form-control form-control-lg @error('order_no') is-invalid @enderror"
-                         value="{{ old('order_no', 0) }}"
-                         min="0" step="1" style="max-width:220px">
-                  <small class="text-muted">Semakin kecil semakin atas.</small>
-                  @error('order_no') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                </div>
-
-                {{-- Actions --}}
-                <div class="d-grid gap-2">
-                  <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
-                    <i class="ti ti-device-floppy"></i> Simpan
-                  </button>
-                  <a href="{{ route('admin.lkd.index') }}" class="btn btn-outline-secondary btn-lg" role="button">
-                    Batal
-                  </a>
-                </div>
-
-              </div>
-            </div>
-          </div>
-
-        </form>
-      </div>
-
-    </div>
+    </form>
   </div>
 </div>
 
-{{-- ===== Prototype (disembunyikan). Dipakai untuk clone baris baru ===== --}}
-<template id="memberTemplate">
-  <div class="member-row" data-row>
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label">Nama</label>
-        <input type="text" name="__NAME_NAMA__" class="form-control" placeholder="Nama lengkap">
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Jabatan</label>
-        <input type="text" name="__NAME_JABATAN__" class="form-control" placeholder="Ketua/Anggota/RT 01/…">
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Kontak</label>
-        <input type="text" name="__NAME_KONTAK__" class="form-control" placeholder="No HP / Email (opsional)">
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Foto</label>
-        <div class="member-photo-wrap">
-          <input type="file" name="__NAME_FOTO__" class="form-control member-foto-input" accept="image/*">
-          <img class="member-preview d-none" alt="preview">
-        </div>
-        <div class="small text-muted mt-1">jpg,jpeg,png,webp maks 2MB</div>
-      </div>
-      <div class="col-12 d-flex justify-content-end">
-        <button type="button" class="btn btn-outline-danger removeRowBtn">
-          <i class="ti ti-x"></i> Hapus baris
-        </button>
-      </div>
+<!-- Preview Slug -->
+<div class="card card-custom mt-4" data-aos="fade-up" data-aos-delay="100">
+  <div class="card-body">
+    <h6 class="mb-3"><i class="ti ti-link me-2"></i>Preview URL</h6>
+    <div class="slug-preview" id="slugPreview">
+      {{ url('/lkd') }}/<span id="slugText">{{ old('slug') ?: 'slug-lkd' }}</span>
     </div>
   </div>
-</template>
+</div>
 @endsection
 
 @push('scripts')
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
-  // Pastikan helper onDomReady tersedia dari layout
-  window.onDomReady(function () {
-    /* ---------- Util ---------- */
-    function slugify(str) {
-      return (str || '')
-        .toString()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-zA-Z0-9\s-]/g, '')
-        .trim()
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .toLowerCase();
-    }
-
-    /* ---------- Elemen dasar ---------- */
-    const form         = document.getElementById('lkdForm');
-    const submitBtn    = document.getElementById('submitBtn');
-    const judulInput   = document.getElementById('judulInput');
-    const slugInput    = document.getElementById('slugInput');
-    const coverInput   = document.getElementById('coverInput');
-    const coverPreview = document.getElementById('coverPreview');
-
-    const membersList  = document.getElementById('membersList');
-    const addBtn       = document.getElementById('addMemberBtn');
-    const add3Btn      = document.getElementById('addBatchBtn');
-    const tpl          = document.getElementById('memberTemplate');
-
-    /* ---------- Slug otomatis ---------- */
-    let slugUserEdited = false;
-    if (slugInput) slugInput.addEventListener('input', () => slugUserEdited = true);
-    if (judulInput && slugInput) {
-      judulInput.addEventListener('input', function () {
-        if (!slugUserEdited) slugInput.value = slugify(this.value);
-      });
-    }
-
-    /* ---------- Cegah submit ganda ---------- */
-    if (form && submitBtn) {
-      form.addEventListener('submit', function () {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML =
-          '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Menyimpan...';
-      });
-    }
-
-    /* ---------- Preview cover ---------- */
-    if (coverInput && coverPreview) {
-      coverInput.addEventListener('change', function (e) {
-        const f = e.target.files && e.target.files[0];
-        if (!f) { coverPreview.classList.add('d-none'); return; }
-        const reader = new FileReader();
-        reader.onload = ev => { coverPreview.src = ev.target.result; coverPreview.classList.remove('d-none'); };
-        reader.readAsDataURL(f);
-      });
-    }
-
-    /* ---------- Helper index ---------- */
-    function getNextIndex() {
-      // Ambil dari data attribute agar akurat & tidak perlu scan DOM
-      let idx = parseInt(membersList.getAttribute('data-next-index') || '0', 10);
-      if (Number.isNaN(idx)) idx = 0;
-      membersList.setAttribute('data-next-index', String(idx + 1));
-      return idx;
-    }
-
-    /* ---------- Buat elemen dari template ---------- */
-    function createMemberRow() {
-      const idx = getNextIndex();
-      const html = tpl.innerHTML
-        .replaceAll('__NAME_NAMA__',    `members[${idx}][nama]`)
-        .replaceAll('__NAME_JABATAN__', `members[${idx}][jabatan]`)
-        .replaceAll('__NAME_KONTAK__',  `members[${idx}][kontak]`)
-        .replaceAll('__NAME_FOTO__',    `members[${idx}][foto]`);
-      const wrapper = document.createElement('div');
-      wrapper.innerHTML = html.trim();
-      return wrapper.firstElementChild;
-    }
-
-    /* ---------- Tambah 1 & Tambah 3 ---------- */
-    if (addBtn && membersList) {
-      addBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        const row = createMemberRow();
-        membersList.appendChild(row);
-        const nameField = row.querySelector('input[name$="[nama]"]');
-        if (nameField) nameField.focus();
-      });
-    }
-
-    if (add3Btn && membersList) {
-      add3Btn.addEventListener('click', function (e) {
-        e.preventDefault();
-        const frag = document.createDocumentFragment();
-        for (let i = 0; i < 3; i++) {
-          frag.appendChild(createMemberRow());
-        }
-        membersList.appendChild(frag);
-      });
-    }
-
-    /* ---------- Delegasi: hapus baris & preview foto anggota ---------- */
-    if (membersList) {
-      // Hapus baris
-      membersList.addEventListener('click', function (e) {
-        const btn = e.target.closest('.removeRowBtn');
-        if (!btn) return;
-        const rows = membersList.querySelectorAll('[data-row]');
-        if (rows.length <= 1) return; // sisakan minimal 1 kartu
-        const row = btn.closest('[data-row]');
-        if (row) row.remove();
-      });
-
-      // Preview foto anggota
-      membersList.addEventListener('change', function (e) {
-        if (!e.target.matches('.member-foto-input')) return;
-        const file = e.target.files && e.target.files[0];
-        const img  = e.target.closest('.member-photo-wrap')?.querySelector('.member-preview');
-        if (!img) return;
-        if (!file) { img.classList.add('d-none'); return; }
-        const reader = new FileReader();
-        reader.onload = ev => { img.src = ev.target.result; img.classList.remove('d-none'); };
-        reader.readAsDataURL(file);
-      });
-    }
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize AOS
+  AOS.init({
+    duration: 800,
+    easing: 'ease-in-out',
+    once: true
   });
+
+  // Slug generation
+  const judulInput = document.getElementById('judulInput');
+  const slugInput = document.getElementById('slugInput');
+  const slugText = document.getElementById('slugText');
+  let slugUserEdited = false;
+
+  // Function to generate slug
+  function slugify(text) {
+    return text.toString().toLowerCase()
+      .replace(/\s+/g, '-')           // Replace spaces with -
+      .replace(/[^\w\-]+/g, '')      // Remove all non-word chars
+      .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+      .replace(/^-+/, '')             // Trim - from start of text
+      .replace(/-+$/, '');            // Trim - from end of text
+  }
+
+  // Auto-generate slug from judul
+  if (judulInput && slugInput) {
+    judulInput.addEventListener('input', function() {
+      if (!slugUserEdited) {
+        const slug = slugify(this.value);
+        slugInput.value = slug;
+        slugText.textContent = slug || 'slug-lkd';
+      }
+    });
+
+    // Mark slug as user-edited when manually changed
+    slugInput.addEventListener('input', function() {
+      slugUserEdited = true;
+      slugText.textContent = this.value || 'slug-lkd';
+    });
+  }
+
+  // Cover preview
+  const coverInput = document.getElementById('coverInput');
+  const coverPreviewContainer = document.getElementById('coverPreviewContainer');
+
+  if (coverInput && coverPreviewContainer) {
+    coverInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      
+      if (file) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          alert('File harus berupa gambar!');
+          return;
+        }
+        
+        // Validate file size (2MB)
+        if (file.size > 2 * 1024 * 1024) {
+          alert('Ukuran file maksimal 2MB!');
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          coverPreviewContainer.innerHTML = `
+            <img src="${event.target.result}" alt="Cover Preview">
+          `;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // Reset to default state
+        coverPreviewContainer.innerHTML = `
+          <div class="text-center text-muted">
+            <i class="ti ti-photo" style="font-size: 3rem;"></i>
+            <p class="mt-2">Preview Cover</p>
+            <small>Pilih gambar untuk melihat preview</small>
+          </div>
+        `;
+      }
+    });
+  }
+
+  // Form validation before submit
+  const createForm = document.getElementById('createForm');
+  if (createForm) {
+    createForm.addEventListener('submit', function(e) {
+      const judul = judulInput.value.trim();
+      const slug = slugInput.value.trim();
+      
+      if (!judul) {
+        e.preventDefault();
+        alert('Judul harus diisi!');
+        judulInput.focus();
+        return;
+      }
+      
+      if (!slug) {
+        e.preventDefault();
+        alert('Slug harus diisi!');
+        slugInput.focus();
+        return;
+      }
+      
+      // Show loading state
+      const submitBtn = this.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+    });
+  }
+});
 </script>
+@endpush
+
+@push('styles')
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 @endpush

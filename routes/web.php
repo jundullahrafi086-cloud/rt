@@ -35,6 +35,8 @@ use App\Http\Controllers\CommentController;
 |--------------------------------------------------------------------------
 */
 use App\Http\Controllers\AdminSliderController;
+use App\Http\Controllers\Admin\LkdController;
+use App\Http\Controllers\Admin\LkdMemberController;
 use App\Http\Controllers\AdminBeritaController;
 use App\Http\Controllers\AdminKategoriController;
 use App\Http\Controllers\AdminWilayahController;
@@ -80,7 +82,7 @@ Route::get('/perpus/{slug}', [PerpusController::class, 'show'])->name('perpus.sh
 
 // LKD (Publik)
 Route::get('/lkd', [LkdPublicController::class, 'index'])->name('lkd.index');
-Route::get('/lkd/{slug}', [LkdPublicController::class, 'show'])->name('lkd.show');
+Route::get('/lkd/{lkd:slug}', [LkdPublicController::class, 'show'])->name('lkd.show');
 
 
 Route::get('/kategori/{kategori:slug}', [kategoriController::class, 'index']);
@@ -100,7 +102,7 @@ Route::get('/layanan', [LayananController::class, 'index']);
 Route::get('/gallery', [GalleryController::class, 'index']);
 /* Pengumuman (Publik) */
 Route::get('/pengumuman', [AnnouncementController::class, 'index']);
-Route::get('/pengumuman/{pengumuman:slug}', [AnnouncementController::class, 'detail']);
+Route::get('/pengumuman/{pengumuman:slug}', [AnnouncementController::class, 'detail'])->name('pengumuman.show');
 
 /* APBDes (Publik) */
 Route::get('/apbdesa', [\App\Http\Controllers\AnggaranController::class, 'index'])->name('apbdesa.index');
@@ -159,16 +161,13 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     ]);
 
     // ENDPOINT BANTUAN (AJAX ONLY)
-     Route::get('lkd/slug', [AdminLkdController::class, 'slug'])
-        ->name('admin.lkd.slug');
+     
+Route::resource('lkd', LkdController::class)->names('admin.lkd');
 
-    Route::post('lkd/limit', [AdminLkdController::class, 'updateLimit'])
-        ->name('admin.lkd.limit');
-
-    // 2) Baru resource-nya
-    Route::resource('lkd', AdminLkdController::class)
-        ->parameters(['lkd' => 'lkd'])
-        ->names('admin.lkd');
+// Nested members (lebih eksplisit & aman)
+Route::post('lkd/{lkd}/members',            [LkdMemberController::class, 'store'])->name('admin.lkd.members.store');
+Route::put('lkd/{lkd}/members/{member}',    [LkdMemberController::class, 'update'])->name('admin.lkd.members.update');
+Route::delete('lkd/{lkd}/members/{member}', [LkdMemberController::class, 'destroy'])->name('admin.lkd.members.destroy');
 
 
     /* Komentar */
@@ -232,5 +231,12 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
      * ===================== */
     Route::get('apbdes/slug', [AdminAnggaranController::class, 'slug'])->name('apbdes.slug');
     Route::resource('apbdes', AdminAnggaranController::class);
+
+    Route::get('pengumuman/slug', [AdminAnnouncementController::class, 'slug'])
+    ->name('admin.pengumuman.slug');
+
+// resource CRUD
+     Route::resource('pengumuman', AdminAnnouncementController::class)
+    ->names('admin.pengumuman');
 
 });

@@ -21,9 +21,6 @@ class Anggaran extends Model
         'dokumen_size',
     ];
 
-    /* ===========================
-     * Accessors URL (pola Kepala Desa)
-     * =========================== */
 
     public function getGambarUrlAttribute(): ?string
     {

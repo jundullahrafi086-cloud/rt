@@ -23,7 +23,7 @@ class AnnouncementController extends Controller
         $pengumuman->views += 1;
         $pengumuman->save();
 
-        return view('pengumuman.detail', [
+        return view('pengumuman.show', [
             'pengumuman'    => $pengumuman
         ]);
     }

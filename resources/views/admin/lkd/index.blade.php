@@ -1,126 +1,171 @@
 @extends('admin.layouts.main')
-
 @section('title','LKD')
-
 @section('content')
 <div class="row">
-  <div class="col-lg-12 d-flex align-items-stretch">
-    <div class="card shadow-lg w-100">
-
-      {{-- Header --}}
-      <div class="card-header bg-primary">
-        <div class="row align-items-center">
-          <div class="col-6">
-            <h5 class="card-title fw-semibold text-white mb-0">LKD</h5>
-            <small class="text-white-50">Kelola Lembaga/Kelompok Desa & anggota</small>
-          </div>
-          <div class="col-6 text-end">
-            <a href="{{ route('admin.lkd.create') }}" class="btn btn-warning">
-              <i class="ti ti-plus"></i> Tambah LKD
-            </a>
-          </div>
+    <div class="col-lg-12 d-flex align-items-strech">
+      <div class="card shadow-lg w-100">
+        <div class="card-header bg-primary">
+            <div class="row align-items-center">
+                <div class="col-6">
+                    <h5 class="card-title fw-semibold text-white">Lembaga/Kelompok Desa</h5>
+                </div>
+                <div class="col-6 text-right">
+                    <a href="{{ route('lkd.index') }}" type="button" class="btn btn-warning float-end me-2" target="_blank">Live Preview</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            @if (session()->has('success'))
+                <div class="alert alert-success" role="alert">
+                    {{ session('success') }}
+                </div>
+            @endif
+            <div class="row">
+                <div class="button">
+                    <a href="{{ route('admin.lkd.create') }}" type="button" class="btn btn-success my-3">Tambah LKD</a>
+                </div>
+                @foreach ($items as $item)
+                  <div class="col-xl-3 my-3" data-aos="fade-up">
+                    <div class="member shadow-lg">
+                      <div class="pic">
+                        @if($item->cover_path)
+                          <img src="{{ asset('storage/' . $item->cover_path) }}" class="img-fluid" alt="{{ $item->judul }}" style="border-radius: 5px">
+                        @else
+                          <img src="{{ asset('images/default-cover.jpg') }}" class="img-fluid" alt="Default Cover" style="border-radius: 5px">
+                        @endif
+                      </div>
+                      <div class="member-info my-2">
+                        <h4 class="text-center">{{ $item->judul }}</h4>
+                        <p class="text-center">
+                          <span class="badge {{ $item->is_published ? 'bg-success' : 'bg-secondary' }}">
+                            {{ $item->is_published ? 'Publik' : 'Draft' }}
+                          </span>
+                        </p>
+                        <p class="text-center small text-muted">{{ $item->members_count ?? $item->members()->count() }} Anggota</p>
+                        <div class="text-center"> 
+                          <a href="{{ route('admin.lkd.edit', $item->id) }}" type="button" class="btn btn-warning">Edit Data</a>
+                          <form id="{{ $item->id }}" action="{{ route('admin.lkd.destroy', $item->id) }}" method="POST" class="d-inline">
+                            @method('delete')
+                            @csrf
+                            <button type="button" class="btn btn-danger swal-confirm" data-form="{{ $item->id }}">Hapus</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                @endforeach
+              </div>
+              
         </div>
       </div>
-
-      {{-- Body --}}
-      <div class="card-body">
-
-        {{-- Flash --}}
-        @if (session('success'))
-          <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        @endif
-        @if (session('error'))
-          <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        @endif
-
-        @if ($items->isEmpty())
-          <div class="alert alert-info">Belum ada data LKD.</div>
-        @else
-          <div class="table-responsive">
-            <table class="table align-middle">
-              <thead>
-                <tr>
-                  <th style="width:80px">Cover</th>
-                  <th>Judul</th>
-                  <th>Slug</th>
-                  <th class="text-center">Anggota</th>
-                  <th class="text-center">Status</th>
-                  <th class="text-center" style="width:100px">Urut</th>
-                  <th>Diupdate</th>
-                  <th style="width:220px">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                @foreach ($items as $lkd)
-                  <tr>
-                    <td>
-                      @if($lkd->cover_url)
-                        <img
-                          src="{{ $lkd->cover_url }}"
-                          alt="cover"
-                          class="rounded"
-                          style="width:64px;height:48px;object-fit:cover"
-                          onerror="this.remove();"
-                        >
-                      @endif
-                    </td>
-                    <td class="fw-semibold">
-                      <a href="{{ route('lkd.show', $lkd) }}" target="_blank" class="text-decoration-none">
-                        {{ $lkd->judul }}
-                      </a>
-                    </td>
-                    <td class="text-muted small">{{ $lkd->slug }}</td>
-                    <td class="text-center">{{ $lkd->members_count ?? $lkd->members()->count() }}</td>
-                    <td class="text-center">
-                      @if ($lkd->is_published)
-                        <span class="badge bg-success">publish</span>
-                      @else
-                        <span class="badge bg-secondary">draft</span>
-                      @endif
-                    </td>
-                    <td class="text-center">{{ $lkd->order_no }}</td>
-                    <td class="text-nowrap">{{ optional($lkd->updated_at)->format('d M Y, H:i') }}</td>
-                    <td>
-                      <div class="d-flex flex-wrap gap-2">
-                        <a href="{{ route('lkd.show', $lkd) }}" target="_blank" class="btn btn-sm btn-success" title="Lihat Publik">
-                          <i class="ti ti-eye"></i>
-                        </a>
-                        <a href="{{ route('admin.lkd.edit', $lkd) }}" class="btn btn-sm btn-warning" title="Edit">
-                          <i class="ti ti-edit"></i>
-                        </a>
-                        <form
-                          action="{{ route('admin.lkd.destroy', $lkd) }}"
-                          method="POST"
-                          onsubmit="return confirm('Hapus LKD beserta anggota yang terkait?')"
-                          class="d-inline"
-                        >
-                          @csrf
-                          @method('DELETE')
-                          <button type="submit" class="btn btn-sm btn-danger" title="Hapus">
-                            <i class="ti ti-trash"></i>
-                          </button>
-                        </form>
-                      </div>
-                    </td>
-                  </tr>
-                @endforeach
-              </tbody>
-            </table>
-          </div>
-
-          <div class="mt-3">
-            {{ $items->links() }}
-          </div>
-        @endif
-
-      </div>
     </div>
-  </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize AOS
+    AOS.init({
+        duration: 800,
+        easing: 'ease-in-out',
+        once: true
+    });
+    
+    // SweetAlert2 for delete confirmation
+    document.querySelectorAll('.swal-confirm').forEach(button => {
+        button.addEventListener('click', function() {
+            const formId = this.getAttribute('data-form');
+            const form = document.getElementById(formId);
+            
+            Swal.fire({
+                title: 'Apakah Anda yakin?',
+                text: "LKD beserta semua anggotanya akan dihapus!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+});
+</script>
+@endpush
+
+@push('styles')
+<style>
+.member {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.member:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.member .pic {
+    height: 200px;
+    overflow: hidden;
+    position: relative;
+}
+
+.member .pic img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: all 0.5s ease;
+}
+
+.member:hover .pic img {
+    transform: scale(1.05);
+}
+
+.member-info {
+    padding: 15px;
+    text-align: center;
+}
+
+.member-info h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #2c3e50;
+}
+
+.member-info p {
+    margin-bottom: 5px;
+    color: #6c757d;
+}
+
+.member-info .btn {
+    margin: 0 3px;
+    border-radius: 5px;
+    padding: 5px 15px;
+    font-weight: 500;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: #dee2e6;
+    margin-bottom: 1rem;
+}
+</style>
+@endpush
