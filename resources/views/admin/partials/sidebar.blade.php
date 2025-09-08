@@ -185,6 +185,23 @@
                         </li>
                     </ul>
                 </li>
+                <li class="sidebar-item">
+                    <a class="sidebar-link" href="/admin/perpus " aria-expanded="false">
+                        <span>
+                            <i class="ti ti-book"></i>
+                        </span>
+                        <span class="hide-menu">Perpus Online</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-item">
+                    <a class="sidebar-link" href="/admin/lkd " aria-expanded="false">
+                        <span>
+                            <i class="ti ti-book"></i>
+                        </span>
+                        <span class="hide-menu">LKD</span>
+                    </a>
+                </li>
 
                 <li class="sidebar-item">
                     <a class="sidebar-link has-arrow" href="#" aria-expanded="false">

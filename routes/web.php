@@ -13,11 +13,14 @@ use App\Http\Controllers\BerandaController;
 use App\Http\Controllers\BeritaController;
 use App\Http\Controllers\kategoriController; // (biarkan sesuai nama class yang kamu pakai)
 use App\Http\Controllers\WilayahController;
+use App\Http\Controllers\LkdPublicController;
+use App\Http\Controllers\AdminLkdController;
 use App\Http\Controllers\SejarahController;
 use App\Http\Controllers\VisiMisiController;
 use App\Http\Controllers\PerangkatDesaController;
 use App\Http\Controllers\DataDesaController;
 use App\Http\Controllers\PetaDesaController;
+use App\Http\Controllers\PerpusController; 
 use App\Http\Controllers\UmkmController;
 use App\Http\Controllers\KontakController;
 use App\Http\Controllers\LayananController;
@@ -47,13 +50,15 @@ use App\Http\Controllers\AdminLayananController;
 use App\Http\Controllers\AdminAnnouncementController;
 use App\Http\Controllers\AdminAnggaranController;
 use App\Http\Controllers\AdminPekerjaanController;
+use App\Http\Controllers\AdminPerpusController; 
 use App\Http\Controllers\AdminJenisKelaminController;
 use App\Http\Controllers\AdminAgamaController;
 use App\Http\Controllers\AdminVideoProfileController;
 use App\Http\Controllers\AdminProfilController;
 use App\Http\Controllers\AdminIdentitasSitusController;
 use App\Http\Controllers\AdminKepalaDesaController;
-
+use App\Http\Controllers\AdminGalleryGroupController;
+use App\Http\Controllers\AdminGalleryController;
 /*
 |--------------------------------------------------------------------------
 | WEB ROUTES
@@ -69,6 +74,14 @@ Route::get('/berita', [BeritaController::class, 'index']);
 Route::get('/berita/{beritas:slug}', [BeritaController::class, 'berita']);
 Route::post('/berita/{slug}', [CommentController::class, 'comment']);
 Route::post('/berita/{slug}/reply', [CommentController::class, 'commentReply']);
+Route::get('/perpus', [PerpusController::class, 'index'])->name('perpus.index');
+// (opsional) detail buku:
+Route::get('/perpus/{slug}', [PerpusController::class, 'show'])->name('perpus.show');
+
+// LKD (Publik)
+Route::get('/lkd', [LkdPublicController::class, 'index'])->name('lkd.index');
+Route::get('/lkd/{slug}', [LkdPublicController::class, 'show'])->name('lkd.show');
+
 
 Route::get('/kategori/{kategori:slug}', [kategoriController::class, 'index']);
 Route::get('/wilayah', [WilayahController::class, 'index']);
@@ -82,20 +95,20 @@ Route::get('/umkm/{umkm:slug}', [UmkmController::class, 'detail']);
 Route::get('/kontak', [KontakController::class, 'index']);
 Route::get('/layanan', [LayananController::class, 'index']);
 
-/* GALERI (Publik) */
-Route::get('/gallery', [GalleryController::class, 'indexAlbum'])->name('gallery.albums.index');
-Route::get('/gallery/{slug}', [GalleryController::class, 'albumDetail'])->name('gallery.albums.detail');
 
+/* GALERI (Publik) */
+Route::get('/gallery', [GalleryController::class, 'index']);
 /* Pengumuman (Publik) */
 Route::get('/pengumuman', [AnnouncementController::class, 'index']);
 Route::get('/pengumuman/{pengumuman:slug}', [AnnouncementController::class, 'detail']);
 
 /* APBDes (Publik) */
-Route::get('/apbdesa',              [AnggaranController::class, 'index'])->name('apbdesa.index');
-Route::get('/apbdesa/{slug}',       [AnggaranController::class, 'detail'])->name('apbdesa.detail');
-Route::get('/apbdesa/{slug}/buka',  [AnggaranController::class, 'open'])->name('apbdesa.open');
-Route::get('/apbdesa/{slug}/unduh', [AnggaranController::class, 'download'])->name('apbdesa.download');
+Route::get('/apbdesa', [\App\Http\Controllers\AnggaranController::class, 'index'])->name('apbdesa.index');
+Route::get('/apbdesa/{anggaran:slug}', [\App\Http\Controllers\AnggaranController::class, 'detail'])->name('apbdesa.detail');
 
+// BARU: open & download dokumen
+Route::get('/apbdesa/{anggaran:slug}/open', [AnggaranController::class, 'open'])->name('apbdes.open');
+Route::get('/apbdesa/{anggaran:slug}/download', [AnggaranController::class, 'download'])->name('apbdesa.download');
 /* =====================
  * AUTH & DASHBOARD
  * ===================== */
@@ -113,6 +126,13 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     /* Berita */
     Route::get('berita/slug', [AdminBeritaController::class, 'slug']);
     Route::resource('berita', AdminBeritaController::class);
+
+    Route::get('perpus/slug', [AdminPerpusController::class, 'slug'])->name('admin.perpus.slug');
+
+    // Resource (pakai parameter khusus agar tidak bentrok nama)
+    Route::resource('perpus', AdminPerpusController::class)
+        ->parameters(['perpus' => 'perpu'])
+        ->names('admin.perpus');
 
     /* Kategori */
     Route::get('kategori/slug', [AdminKategoriController::class, 'slug']);
@@ -138,6 +158,19 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
         'destroy' => 'kepala-desa.destroy',
     ]);
 
+    // ENDPOINT BANTUAN (AJAX ONLY)
+     Route::get('lkd/slug', [AdminLkdController::class, 'slug'])
+        ->name('admin.lkd.slug');
+
+    Route::post('lkd/limit', [AdminLkdController::class, 'updateLimit'])
+        ->name('admin.lkd.limit');
+
+    // 2) Baru resource-nya
+    Route::resource('lkd', AdminLkdController::class)
+        ->parameters(['lkd' => 'lkd'])
+        ->names('admin.lkd');
+
+
     /* Komentar */
     Route::get('komentar', [AdminCommentController::class, 'index'])->name('komentar.index');
     Route::delete('komentar/{id}', [AdminCommentController::class, 'destroy'])->name('komentar.destroy');
@@ -156,6 +189,7 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
 
     /* Agama */
     Route::resource('agama', AdminAgamaController::class);
+
 
     /* Jenis Kelamin */
     Route::resource('jenis-kelamin', AdminJenisKelaminController::class);
@@ -190,34 +224,13 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     /* =====================
      * GALLERY (ADMIN) — gunakan FQCN agar tidak error missing import
      * ===================== */
-    Route::resource('gallery', \App\Http\Controllers\AdminGalleryGroupController::class)
-        ->parameters(['gallery' => 'album'])
-        ->names('admin.gallery');
-
-    Route::get('gallery/slug', [\App\Http\Controllers\AdminGalleryGroupController::class, 'slug'])
-        ->name('admin.gallery.slug');
-
-    Route::get('gallery/{album}/foto', [\App\Http\Controllers\AdminGalleryController::class, 'indexByAlbum'])
-        ->name('admin.gallery.foto.index');
-    Route::post('gallery/{album}/foto', [\App\Http\Controllers\AdminGalleryController::class, 'storeToAlbum'])
-        ->name('admin.gallery.foto.store');
-    Route::delete('gallery/{album}/foto/{foto}', [\App\Http\Controllers\AdminGalleryController::class, 'destroyFromAlbum'])
-        ->name('admin.gallery.foto.destroy');
-
-    /* Pengumuman */
-    Route::get('pengumuman/slug', [AdminAnnouncementController::class, 'slug']);
-    Route::resource('pengumuman', AdminAnnouncementController::class);
+   
+   Route::resource('gallery', AdminGalleryController::class);
 
     /* =====================
      * APBDes (ADMIN)
      * ===================== */
-    Route::get('apbdes/slug', [AdminAnggaranController::class, 'slug'])
-        ->name('admin.apbdes.slug');
+    Route::get('apbdes/slug', [AdminAnggaranController::class, 'slug'])->name('apbdes.slug');
+    Route::resource('apbdes', AdminAnggaranController::class);
 
-    Route::delete('apbdes/{id}/file', [AdminAnggaranController::class, 'removeFile'])
-        ->name('admin.apbdes.file.remove');
-
-    Route::resource('apbdes', AdminAnggaranController::class)
-        ->parameters(['apbdes' => 'apbde'])
-        ->names('admin.apbdes');
 });

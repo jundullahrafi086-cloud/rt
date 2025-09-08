@@ -5,7 +5,7 @@
         <div class="section-title">
             <h2>Gallery</h2>
         </div>
-        <div class="card sahdow-lg">
+        <div class="container">
             <div class="row">
                 @foreach ($galerrys as $gallery)
                     <div class="col-lg-3">

@@ -1,44 +1,71 @@
 @extends('admin.layouts.main')
-@section('content')
-@if(session('success')) <div class="alert alert-success">{{ session('success') }}</div> @endif
 
-<div class="card shadow-sm mb-3">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h5 class="mb-0">Galeri (Album)</h5>
-    <a href="{{ route('admin.gallery.create') }}" class="btn btn-primary">Buat Album</a>
-  </div>
-  <div class="card-body">
-    <div class="row g-4">
-      @forelse($items as $album)
-        <div class="col-md-4">
-          <div class="card h-100 shadow-sm border-0">
-            <div class="ratio ratio-16x9 overflow-hidden">
-              <img src="{{ $album->cover_url ?? asset('images/album-default.jpg') }}"
-                   class="rounded-top" style="object-fit:cover" alt="cover">
+@section('content')
+    <div class="row">
+        <div class="col-lg-12 d-flex align-items-strech">
+            <div class="card w-100">
+                <div class="card-header bg-primary">
+                    <div class="row align-items-center">
+                        <div class="col-6">
+                            <h5 class="card-title fw-semibold text-white">Gallery</h5>
+                        </div>
+                        <div class="col-6 text-right">
+                            <a href="/admin/gallery/create" type="button" class="btn btn-warning float-end">Tambah
+                                Gallery</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    @if (session()->has('success'))
+                        <div class="alert alert-success" role="alert">
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
+                    <div class="row">
+                        <div class="table-responsive">
+                            <table id="table_id" class="table display">
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Gambar</th>
+                                        <th>Keterangan</th>
+                                        <th>Opsi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($gallerys as $gallery)
+                                        <tr>
+                                            <td>{{ $loop->iteration }}</td>
+                                            <td><img src="{{ asset('storage/' . $gallery->gambar) }}" alt="Foto Gallery"
+                                                    class="img-fluid" style="max-height: 200px; max-width: 200px"></td>
+                                            <td>{{ $gallery->keterangan }}</td>
+                                            <td>
+                                                <a href="/admin/gallery/{{ $gallery->id }}/edit" type="button"
+                                                    class="btn btn-warning mb-1"><i class="ti ti-edit"></i></a>
+                                                <form id="{{ $gallery->id }}" action="/admin/gallery/{{ $gallery->id }}"
+                                                    method="POST" class="d-inline">
+                                                    @method('delete')
+                                                    @csrf
+                                                    <button type="button" class="btn btn-danger swal-confirm mb-1"
+                                                        data-form="{{ $gallery->id }}"><i class="ti ti-trash"></i></button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-              <h6 class="fw-semibold mb-1">{{ $album->judul }}</h6>
-              <p class="small text-muted mb-3">{{ \Illuminate\Support\Str::limit($album->deskripsi, 100) }}</p>
-              <div class="d-flex gap-2 flex-wrap">
-                <a href="{{ route('admin.gallery.foto.index', $album->id) }}" class="btn btn-sm btn-info">Kelola Foto</a>
-                <a href="{{ route('admin.gallery.edit', $album->id) }}" class="btn btn-sm btn-secondary">Edit</a>
-                <form method="POST" action="{{ route('admin.gallery.destroy', $album->id) }}"
-                      onsubmit="return confirm('Hapus album ini?')">
-                  @csrf @method('DELETE')
-                  <button class="btn btn-sm btn-danger">Hapus</button>
-                </form>
-              </div>
-            </div>
-            <div class="card-footer bg-white small text-muted">
-              Diperbarui {{ $album->updated_at?->format('d M Y H:i') }}
-            </div>
-          </div>
         </div>
-      @empty
-        <div class="col-12"><div class="alert alert-info">Belum ada album.</div></div>
-      @endforelse
     </div>
-    <div class="mt-3">{{ $items->links() }}</div>
-  </div>
-</div>
+
+    <script>
+        $(document).ready(function() {
+            $('#table_id').DataTable();
+        });
+    </script>
 @endsection

@@ -4,41 +4,43 @@ namespace App\Http\Controllers;
 
 use App\Models\Anggaran;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AnggaranController extends Controller
 {
+    /**
+     * Halaman daftar APBDes (publik)
+     * URL: /apbdesa
+     */
     public function index()
     {
-        $items = Anggaran::latest()->paginate(12);
-        return view('apbdesa.index', compact('items'));
+        // Pilih kolom yang diperlukan saja agar ringan
+        $items = Anggaran::select('id','judul','slug','keterangan','gambar','dokumen_path','dokumen_original','created_at')
+            ->orderByDesc('created_at')
+            ->paginate(9);
+
+        // Buat excerpt singkat dari keterangan untuk kartu
+        $items->getCollection()->transform(function ($row) {
+            $row->excerpt = Str::limit(trim(strip_tags($row->keterangan ?? '')), 140);
+            return $row;
+        });
+
+        return view('apbdes.index', compact('items'));
     }
 
-    public function detail(string $slug)
+    /**
+     * Halaman detail APBDes (publik)
+     * URL: /apbdesa/{anggaran:slug}
+     */
+    public function detail(Anggaran $anggaran)
     {
-        $anggaran = Anggaran::where('slug', $slug)->firstOrFail();
-        return view('apbdesa.detail', compact('anggaran'));
-    }
+        // Siapkan data pelengkap untuk tampilan
+        $related = Anggaran::select('id','judul','slug','gambar','created_at')
+            ->where('id', '!=', $anggaran->id)
+            ->latest()
+            ->limit(6)
+            ->get();
 
-    // Buka (inline) di tab browser (PDF umumnya inline; file lain tergantung browser)
-    public function open(string $slug)
-    {
-        $anggaran = Anggaran::where('slug', $slug)->firstOrFail();
-        abort_unless($anggaran->dokumen_path && Storage::disk('public')->exists($anggaran->dokumen_path), 404);
-
-        $path = storage_path('app/public/'.$anggaran->dokumen_path);
-        $mime = $anggaran->dokumen_mime ?: 'application/octet-stream';
-
-        return response()->file($path, ['Content-Type' => $mime]);
-    }
-
-    // Unduh file
-    public function download(string $slug)
-    {
-        $anggaran = Anggaran::where('slug', $slug)->firstOrFail();
-        abort_unless($anggaran->dokumen_path && Storage::disk('public')->exists($anggaran->dokumen_path), 404);
-
-        $filename = $anggaran->dokumen_original ?: basename($anggaran->dokumen_path);
-        return Storage::disk('public')->download($anggaran->dokumen_path, $filename);
+        return view('apbdes.detail', compact('anggaran', 'related'));
     }
 }

@@ -82,7 +82,7 @@ class AdminSliderController extends Controller
     public function update(Request $request, Slider $slider)
     {
         $rules = [
-            'img_slider' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+            'img_slider' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:10280',
             'judul'      => 'required|string|max:255',
             'deskripsi'  => 'required|string',
             'link_btn'   => 'nullable|string|max:255',

@@ -17,7 +17,7 @@
             {{-- Cover image (rasio seragam) --}}
             <div class="ratio ratio-16x9">
               @if($row->gambar_url)
-                <img src="{{ $row->gambar_url }}" class="rounded-top object-fit-cover" alt="Cover {{ $row->judul }}">
+                <img src="{{ asset('storage/'.$row->gambar) }}" alt="Cover {{ $row->judul }}" class="img-fluid" style="object-fit:cover;">
               @else
                 <img src="{{ asset('images/default-apbdes.jpg') }}" class="rounded-top object-fit-cover" alt="Cover default">
               @endif
@@ -41,7 +41,7 @@
 
                 @if(!empty($row->dokumen_path))
                   <div class="d-flex gap-2">
-                    <a href="{{ route('apbdesa.open', $row->slug) }}" target="_blank" class="btn btn-outline-secondary flex-fill">
+                    <a href="{{ route('apbdes.open', $row->slug) }}" target="_blank" class="btn btn-outline-secondary flex-fill">
                       <i class="bi bi-box-arrow-up-right"></i> Buka
                     </a>
                     <a href="{{ route('apbdesa.download', $row->slug) }}" class="btn btn-outline-secondary flex-fill">

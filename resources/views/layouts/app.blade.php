@@ -27,6 +27,7 @@
   </div>
   <script src="admin/assets/libs/jquery/dist/jquery.min.js"></script>
   <script src="admin/assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+  @stack('scripts')
 </body>
 
 </html>

@@ -1,42 +1,69 @@
 @extends('admin.layouts.main')
 
 @section('content')
-<form method="POST" action="{{ route('admin.apbdes.update', $anggaran->id) }}" enctype="multipart/form-data">
-@csrf @method('PUT')
+<div class="row">
+  <div class="col-lg-12 d-flex align-items-strech">
+    <div class="card shadow-lg w-100">
+      <div class="card-header bg-primary">
+        <div class="row align-items-center">
+          <div class="col-6">
+            <h5 class="card-title fw-semibold text-white">Edit APBDes</h5>
+          </div>
+          <div class="col-6 text-right">
+            <a href="{{ route('apbdes.index') }}" type="button" class="btn btn-warning float-end">Kembali</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
+<form method="POST" action="{{ route('apbdes.update', $anggaran->id) }}" enctype="multipart/form-data" id="form-apbdes">
+@csrf @method('PUT')
 <div class="row">
   <div class="col-lg-8">
     <div class="card shadow-lg">
       <div class="card-body">
+        @if ($errors->any())
+          <div class="alert alert-danger">
+            <strong>Periksa input:</strong>
+            <ul class="mb-0">
+              @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
+            </ul>
+          </div>
+        @endif
+
         <div class="mb-3">
-          <label class="form-label">Judul</label>
-          <input type="text" class="form-control" name="judul" value="{{ old('judul',$anggaran->judul) }}" required>
+          <label class="form-label">Judul <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" name="judul" id="judul" value="{{ old('judul', $anggaran->judul) }}" required>
           @error('judul')<div class="text-danger">{{ $message }}</div>@enderror
         </div>
+
         <div class="mb-3">
-          <label class="form-label">Slug</label>
-          <input type="text" class="form-control" name="slug" value="{{ old('slug',$anggaran->slug) }}" required>
+          <label class="form-label">Slug/Permalink <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" name="slug" id="slug" value="{{ old('slug', $anggaran->slug) }}" required>
           @error('slug')<div class="text-danger">{{ $message }}</div>@enderror
+          <small class="text-muted">Ubah judul lalu klik kolom ini setelah generator slug, atau isi manual.</small>
         </div>
+
         <div class="mb-3">
-          <label class="form-label">Keterangan</label>
-          <textarea class="form-control" name="keterangan" rows="8" required>{{ old('keterangan',$anggaran->keterangan) }}</textarea>
+          <label class="form-label">Keterangan <span class="text-danger">*</span></label>
+          <textarea class="form-control" id="editor" name="keterangan" rows="10">{{ old('keterangan', $anggaran->keterangan) }}</textarea>
           @error('keterangan')<div class="text-danger">{{ $message }}</div>@enderror
         </div>
 
         <div class="mb-3">
-          <label class="form-label">File Dokumen APBDes (PDF/Excel/Word/ZIP)</label>
+          <label class="form-label">Ganti Dokumen (opsional)</label>
           @if($anggaran->dokumen_path)
             <div class="mb-2">
-              <a class="btn btn-sm btn-info" target="_blank" href="{{ $anggaran->dokumen_url }}">Buka saat ini</a>
-              <span class="small text-muted ms-2">{{ $anggaran->dokumen_original }} ({{ number_format(($anggaran->dokumen_size ?? 0)/1024,0) }} KB)</span>
-              <form action="{{ route('admin.apbdes.file.remove', $anggaran->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus file saat ini?')">
-                @csrf @method('DELETE')
-                <button type="submit" class="btn btn-sm btn-outline-danger ms-2">Hapus File</button>
-              </form>
+              <a href="{{ asset('storage/'.$anggaran->dokumen_path) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                Dokumen saat ini
+              </a>
             </div>
           @endif
-          <input class="form-control" type="file" name="dokumen" accept=".pdf,.xls,.xlsx,.csv,.doc,.docx,.ppt,.pptx,.zip,.rar">
+          <input class="form-control" type="file" id="dokumen" name="dokumen"
+                 accept=".pdf,.xls,.xlsx,.csv,.doc,.docx,.ppt,.pptx,.zip,.rar">
+          <small class="text-muted d-block mt-1">Kosongkan jika tidak ingin mengganti.</small>
           @error('dokumen')<div class="text-danger">{{ $message }}</div>@enderror
         </div>
       </div>
@@ -47,20 +74,55 @@
     <div class="card shadow-lg">
       <div class="card-body">
         <div class="mb-3">
-          @if($anggaran->gambar_url)
-            <img src="{{ $anggaran->gambar_url }}" class="img-fluid rounded mb-2" style="max-height:300px">
-          @endif
-          <label class="form-label">Gambar Sampul (opsional)</label>
-          <input class="form-control" type="file" name="gambar" accept="image/*">
+          <label class="form-label d-block">Gambar Sampul Saat Ini</label>
+          <div class="ratio ratio-16x9 mb-2" style="background:#f6f6f6;border-radius:5px;overflow:hidden;">
+            @if($anggaran->gambar)
+              <img src="{{ asset('storage/'.$anggaran->gambar) }}" class="img-fluid" style="object-fit:cover;">
+            @else
+              <div class="d-flex align-items-center justify-content-center text-muted" style="height:100%;">
+                Tidak ada gambar
+              </div>
+            @endif
+          </div>
+          <label class="form-label">Ganti Gambar (opsional)</label>
+          <input class="form-control" type="file" id="gambar" name="gambar" accept="image/*" onchange="previewImage()">
           @error('gambar')<div class="text-danger">{{ $message }}</div>@enderror
+
+          <img src="" class="img-preview img-fluid mb-3 mt-2" id="preview" style="border-radius:5px; max-height:300px; overflow:hidden;">
         </div>
-        <div class="d-flex gap-2">
-          <a href="{{ route('apbdesa.index') }}" class="btn btn-secondary">Kembali</a>
-          <button class="btn btn-primary ms-auto" type="submit">Simpan</button>
-        </div>
+        <button type="submit" class="btn btn-primary float-end">Simpan</button>
       </div>
     </div>
   </div>
 </div>
 </form>
+
+{{-- Generator Slug --}}
+<script>
+  const judul = document.querySelector('#judul');
+  const slug  = document.querySelector('#slug');
+  if (judul && slug) {
+    judul.addEventListener('change', function(){
+      fetch('{{ route('apbdes.slug') }}?judul=' + encodeURIComponent(judul.value))
+        .then(r => r.json())
+        .then(d => { if (d && d.slug) slug.value = d.slug })
+        .catch(() => {});
+    });
+  }
+</script>
+
+<script>
+  function previewImage() {
+    const input = document.getElementById('gambar');
+    const preview = document.getElementById('preview');
+    preview.src = (input.files && input.files[0]) ? URL.createObjectURL(input.files[0]) : '';
+  }
+</script>
+
+{{-- CKEditor (opsional) --}}
+<script>
+  if (window.ClassicEditor) {
+    ClassicEditor.create(document.querySelector('#editor')).catch(console.error);
+  }
+</script>
 @endsection

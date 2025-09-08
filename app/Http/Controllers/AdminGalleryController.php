@@ -2,54 +2,134 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Berita;
 use App\Models\Gallery;
-use App\Models\GalleryGroup;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class AdminGalleryController extends Controller
 {
-    // Halaman foto per album
-    public function indexByAlbum(GalleryGroup $album)
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
     {
-        $fotos = Gallery::where('group_id', $album->id)
-            ->orderByDesc('created_at')->paginate(24);
-
-        return view('admin.gallery.foto.index', compact('album','fotos'));
+        return view('admin.gallery.index', [
+            'gallerys'  => Gallery::all()
+        ]);
     }
 
-    // Upload banyak foto ke album
-    public function storeToAlbum(Request $request, GalleryGroup $album)
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
     {
-        $request->validate([
-            'fotos'   => ['required'],
-            'fotos.*' => ['image','mimes:jpg,jpeg,png,webp','max:4096'],
+        return view('admin.gallery.create');
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'gambar'       => 'required|mimes:png,jpg,jpeg',
+            'keterangan'   => 'required'
+        ], [
+            'gambar.required'       => 'Form wajib di isi !',
+            'gambar.mimes'          => 'Format yang di izinkan png,jpg,jpeg !',
+            'keterangan.required'   => 'Form wajib di,'
         ]);
 
-        if ($request->hasFile('fotos')) {
-            foreach ($request->file('fotos') as $img) {
-                $stored = $img->store("gallery/albums/{$album->id}", 'public');
-
-                // Isi kedua kolom (path + gambar) agar kompatibel dgn skema lama.
-                Gallery::create([
-                    'group_id'     => $album->id,
-                    'title'        => pathinfo($img->getClientOriginalName(), PATHINFO_FILENAME),
-                    'description'  => null,
-                    'is_published' => true,
-                    'path'         => $stored,
-                    'gambar'       => $stored,
-                ]);
-            }
+        if ($request->hasFile('gambar')) {
+            $path       = 'img-gallery/';
+            $file       = $request->file('gambar');
+            $extension  = $file->getClientOriginalExtension();
+            $fileName   = uniqid() . '.' . $extension;
+            $gambar     = $file->storeAs($path, $fileName, 'public');
+        } else {
+            $gambar     = null;
         }
 
-        return back()->with('success','Foto berhasil diunggah.');
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        Gallery::create([
+            'gambar'       => $gambar,
+            'keterangan'   => $request->keterangan,
+            'user_id'      => auth()->user()->id,
+        ]);
+
+        return redirect('/admin/gallery')->with('success', 'Berhasil menambahkan informasi layanan baru');
     }
 
-    // Hapus satu foto di album
-    public function destroyFromAlbum(GalleryGroup $album, Gallery $foto)
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
     {
-        abort_if($foto->group_id !== $album->id, 404);
-        $foto->delete();
-        return back()->with('success','Foto dihapus.');
+        $gallery = Gallery::find($id);
+        return view('admin.gallery.edit', [
+            'gallery'   => $gallery,
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        $gallery = Gallery::find($id);
+        $validator = Validator::make($request->all(), [
+            'keterangan'   => 'required'
+        ], [
+            'keterangan.required'   => 'Form wajib di,'
+        ]);
+
+        if ($request->hasFile('gambar')) {
+            if ($gallery->gambar) {
+                unlink('.' . Storage::url($gallery->gambar));
+            }
+            $path       = 'img-gallery/';
+            $file       = $request->file('gambar');
+            $extension  = $file->getClientOriginalExtension();
+            $fileName   = uniqid() . '.' . $extension;
+            $gambar     = $file->storeAs($path, $fileName, 'public');
+        } else {
+            $validator = Validator::make($request->all(), [
+                'gambar'       => 'mimes:png,jpg,jpeg',
+                'keterangan'   => 'required'
+            ], [
+                'gambar.mimes'          => 'Format yang di izinkan png,jpg,jpeg !',
+                'keterangan.required'   => 'Form wajib di,'
+            ]);
+            $gambar = $gallery->gambar;
+        }
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $gallery->update([
+            'gambar'        => $gambar,
+            'keterangan'    => $request->keterangan
+        ]);
+
+        return redirect('/admin/gallery')->with('success', 'Berhasil memperbarui data gallery');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        $gallery = Gallery::find($id);
+        unlink('.' . Storage::url($gallery->gambar));
+        $gallery->delete();
+
+        return redirect()->back()->with('success', 'Berhasil menghapus data');
     }
 }
